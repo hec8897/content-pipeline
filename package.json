@@ -1,0 +1,21 @@
+{
+  "name": "content-pipeline",
+  "private": true,
+  "packageManager": "pnpm@10.33.0",
+  "scripts": {
+    "dev": "turbo dev",
+    "dev:frontend": "turbo dev --filter=frontend",
+    "build": "turbo build",
+    "build:frontend": "turbo build --filter=frontend",
+    "lint": "turbo lint",
+    "test": "turbo test",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json}\" --ignore-path .gitignore"
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3",
+    "turbo": "^2.3.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
