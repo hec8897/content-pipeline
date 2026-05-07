@@ -169,7 +169,7 @@
 | ------------------ | --------------------------------------------------------------------- |
 | 🔴 SPOF (n8n 다운) | 우리 DB 큐 + retry 로직 + 모니터링. 장애 시 직접 어댑터 fallback 가능 |
 | 🔴 벤더 락인       | 발행 어댑터 인터페이스 추상화 → 마이그레이션 옵션 보존                |
-| 🟡 학습 곡선       | 초기 셋업 비용 있지만 학습 가치 있음                                  |
+| 🟡 학습 곡선       | 토이의 학습 가치이기도 함 (1차 NestJS 학습량과 유사)                  |
 | 🟡 디버깅          | n8n UI execution log → 오히려 코드보다 시각적                         |
 
 ---
@@ -256,8 +256,8 @@ Phase 8 — 통합 + dogfooding (~2일)
 
 1. 🎯 **학습 가치 최대화** — Docker + ECR + Fargate Task Definition + ALB + IAM execution role 등 AWS 컨테이너 표준 워크플로우 전부 경험
 2. 💰 **"껐다 켰다" 비용 모델과 잘 맞음** — Fargate는 task `desired count = 0` 으로 내리면 컴퓨팅 비용 = $0. EC2처럼 EBS 스토리지 비용 잔존 없음
-3. 🐳 **처음부터 컨테이너 워크플로우** — Docker + ECR + Fargate 표준 스택으로 시작
-4. 🔁 **마이그레이션 학습 사이클 가능** — 추후 ECS on EC2 / EKS 등으로 옮기는 것 자체가 학습 콘텐츠
+3. 🐳 **1차와 깨끗한 분리** — 1차 devjournal-backend는 EC2 + PM2 (Docker 미사용). 2차는 처음부터 컨테이너 워크플로우로 가는 게 학습 진척에 명확
+4. 🔁 **Phase B 마이그레이션 학습 사이클 가능** — 추후 ECS on EC2 / EKS 등으로 옮기는 것 자체가 또 하나의 학습 콘텐츠
 
 ### 비용 시나리오 (대략)
 
@@ -396,7 +396,7 @@ n8n에 들어오는 트래픽은 두 종류:
 
 | Phase | Plan                                                              | 상태                 |
 | ----- | ----------------------------------------------------------------- | -------------------- |
-| 1     | [Phase 1 — 기반](./plans/2026-05-01-content-pipeline-phase-1.md) | 작성 완료, 실행 대기 |
+| 1     | [Phase 1 — 기반](../plans/2026-05-01-content-pipeline-phase-1.md) | 작성 완료, 실행 대기 |
 
 > Phase 2~8 plan은 직전 Phase 완료 후 순차 작성. Phase 1이 굳혀야 Phase 2 위에 얹을 토대가 명확해짐.
 
@@ -404,31 +404,43 @@ n8n에 들어오는 트래픽은 두 종류:
 
 ## 9. 결정 이력
 
-- **2026-04-28**: 컨셉 확정 = AI 인터뷰 기반 콘텐츠 자동화 SaaS
+- **2026-04-28**: 1차 프로토타입(DevJournal Day 14) 종료 결정 → 컨셉 피벗
+- **2026-04-28**: 새 컨셉 = AI 인터뷰 기반 콘텐츠 자동화 SaaS
 - **2026-04-28**: 타겟 = 개인 크리에이터(1순위) + 1인 사업자(2순위)
 - **2026-04-28**: 발행 채널 = 네이버(메일 트릭) + Tistory(API) + 인스타(반자동)
 - **2026-04-28**: n8n internal pattern 채택, 사용자에게 노출 X
 - **2026-04-28**: 우리 앱이 발행 큐의 SoT, n8n은 replaceable 실행 엔진
+- **2026-04-28**: 앱 위치 = `apps/content-pipeline/` 신설 + `apps/devjournal/` read-only 보존 (B-3 모드)
 - **2026-04-28**: 가칭 이름 = `content-pipeline` (브랜드 네이밍은 추후 정식 결정)
-- **2026-04-28**: 1차 사용자 = 개발자 본인 (dogfooding), 본인 검증부터
-- **2026-04-28**: AI 모델 = `gemini-2.5-flash` 메인 + 폴백 체인, `gemini-embedding-001` 임베딩, `@google/generative-ai` SDK
-- **2026-04-28**: 인스타 카드뉴스 비주얼 = 텍스트만 (단색 배경), 템플릿/AI 이미지는 3차 이후
-- **2026-04-28**: Supabase = content-pipeline 전용 독립 프로젝트
-- **2026-04-28**: MVP 스코프 = **Solid+ MVP** (n8n 자동: 네이버 + 인스타, 스케줄러 포함). Tistory는 3차로 미룸
-- **2026-04-28**: **Phase 기반 분배** (예상 17~22일, 정확한 일수는 plan 단계에서 결정)
+- **2026-04-28**: 2차 MVP = **Lean MVP** (수동 발행, 14일 분배), n8n/자동발행/결제는 3차 이후
+- **2026-04-28**: 1차 사용자 = 개발자 본인 (dogfooding), 토이프로젝트 성격 살려 본인 검증부터
+- **2026-04-28**: AI 모델 = 1차와 동일한 Gemini 스택 재활용 (`gemini-2.5-flash` 메인 + 폴백 체인, `gemini-embedding-001` 임베딩, `@google/generative-ai` SDK)
+- **2026-04-28**: 인스타 카드뉴스 비주얼 = Lean MVP는 텍스트만 (단색 배경), 템플릿/AI 이미지는 3차 이후
+- **2026-04-28**: Supabase = 1차 DevJournal과 같은 인스턴스 + 새 스키마/테이블 (무료 티어 절약, 인증/배포 환경 재활용)
+- **2026-04-28**: MVP 스코프 변경 — Lean MVP(수동 발행) → **Solid+ MVP** (n8n 자동: 네이버 + 인스타, 스케줄러 포함). Tistory는 3차로 미룸
+- **2026-04-28**: 14일 고정 마일스톤 폐기 → **Phase 기반 분배** (예상 17~22일, 정확한 일수는 plan 단계에서 결정)
 - **2026-04-28**: 인스타 자동 발행 = Meta App **Development Mode**로 dogfooding (본인 Business 계정만 사용, App Review 불필요). Production Mode 전환 + App Review는 일반 사용자 출시 직전 단계
-- **2026-04-29**: 컨테이너 오케스트레이션 = **ECS Fargate + ECR** 채택. 후보였던 EC2 + Docker Compose / ECS on EC2는 후속 학습 사이클 옵션으로 메모
+- **2026-04-29**: 컨테이너 오케스트레이션 = **ECS Fargate + ECR** 채택 (Docker 학습 + "껐다 켰다" 비용 모델 적합). 후보였던 EC2 + Docker Compose / ECS on EC2는 후속 학습 사이클 옵션으로 메모
 - **2026-04-29**: 네트워크 = 단일 VPC + public subnet only (NAT Gateway 비용 회피), Security Group 제한
 - **2026-04-29**: n8n 노출 방식 = **B (Cloudflare Access + public webhook)** 채택. UI/관리 경로는 Cloudflare Zero Trust 이메일 인증, `/webhook/*` 만 public + HMAC 시그니처. 후보 A(전체 공개 + Basic Auth) / C(완전 internal + SSH 터널)는 fallback/후속 검토용으로 메모
-- **2026-04-29**: AI 인터뷰 위상 = **skippable 기본 경로** (스킵 가능, 스킵 시 양산 품질 안내)
-- **2026-04-29**: AI 인터뷰 질문 생성 = **매 턴 동적 LLM 호출**
-- **2026-04-29**: AI 인터뷰 종료 조건 = **하이브리드** (최소 3개 + AI 판단 + 사용자 "그만" + 최대 8개)
-- **2026-04-29**: AI 인터뷰 UX = **Typeform-like wizard** (한 화면 한 질문, 진행률 표시)
-- **2026-04-29**: AI 인터뷰 사용자 통제권 = **단방향 + 종료 후 리뷰 화면 편집**
-- **2026-04-29**: AI 인터뷰 답변 형태 = **텍스트만** (모바일은 OS 음성받아쓰기). 사진 첨부는 주제 입력 단계 한정
+- **2026-04-29**: 1차 devjournal 인프라 = 기존 EC2 + PM2 그대로 read-only 유지, 2차로 마이그레이션 X
+- **2026-04-29**: AI 인터뷰 위상 = **skippable 기본 경로** (스킵 가능, 스킵 시 양산 품질 안내). B(분기 선택)/C(AI 판단)/D(필수) 후보는 메모로 남김
+- **2026-04-29**: AI 인터뷰 질문 생성 = **매 턴 동적 LLM 호출**. 차별점("AI 인터뷰형")을 가장 강한 형태로 구현. B(시드+동적)/C(일괄)/D(일괄+분기) 후보는 메모
+- **2026-04-29**: AI 인터뷰 종료 조건 = **하이브리드** (최소 3개 + AI 판단 + 사용자 "그만" + 최대 8개). A(고정 N)/B(AI만)/C(사용자만) 후보는 메모
+- **2026-04-29**: AI 인터뷰 UX = **Typeform-like wizard** (한 화면 한 질문, 진행률 표시). A(채팅)/C(채팅+사이드)/D(디바이스별 분기) 후보는 메모
+- **2026-04-29**: AI 인터뷰 사용자 통제권 = **단방향 + 종료 후 리뷰 화면 편집**. A(단방향만)/C(양방향+리뷰)/D(C+중단재개) 후보는 메모
+- **2026-04-29**: AI 인터뷰 답변 형태 = **텍스트만** (모바일은 OS 음성받아쓰기). 사진 첨부는 **주제 입력 단계 한정** (인터뷰 답변/양산 출력엔 X, 6.5 텍스트만 결정 유지)
 
 ---
 
-- **2026-05-01**: Phase 1 plan 작성 완료. 인증 = Supabase Auth + `SupabaseAuthGuard`, n8n 영속 = Supabase Postgres의 별도 `n8n` schema + `n8n_runner` role, 배포 자동화 = GitHub Actions OIDC → ECR/ECS update-service
-- **2026-05-01**: `SupabaseService` 구현 패턴 = `ConfigService.getOrThrow` + constructor 주입 + `SupabaseClient<Database>` 타입드 + `anon`/`admin` 네이밍
+- **2026-05-01**: Phase 1 plan 작성 완료. 핵심 결정 — 인증 = Supabase Auth + `SupabaseAuthGuard` 1차 devjournal 패턴 1:1 재활용 (NestJS JWT 옵션 폐기), 도메인 테이블 = `cp_*` 접두어로 `public` 스키마 격리(별도 DB 스키마 분리는 미사용 — Supabase PostgREST 노출 설정 회피), n8n 영속 = 같은 Supabase Postgres의 별도 `n8n` schema + `n8n_runner` role, 배포 자동화 = GitHub Actions OIDC → ECR/ECS update-service
+- **2026-05-01**: **DB 결정 변경** — content-pipeline 전용 **신규 Supabase 프로젝트** 생성 (1차 devjournal Supabase는 pause). 이전 결정(2026-04-28 "1차와 같은 인스턴스" + 2026-05-01 "`cp_*` 접두어 + public schema") 폐기. 사유 — (1) 일반 SaaS 출시 대상이라 1차 dogfooding 사용자와 분리 필요 (2) RLS/마이그레이션 격리로 사고 위험 ↓ (3) 1차 pause로 무료 슬롯 재배치 가능. 영향 — 도메인 테이블 접두어 제거(자유로운 이름), `auth.users` 분리(양쪽 별도 가입), `.env`에 cp 전용 키 사용, n8n schema는 cp Supabase Postgres에 위치(이전 결정 그대로)
+- **2026-05-01**: `SupabaseService` 구현 패턴 = devjournal 1차 실구현 1:1 재활용 (`ConfigService.getOrThrow` + constructor 주입 + `SupabaseClient<Database>` 타입드 + `anon`/`admin` 네이밍). 이전 plan 초안(`process.env` + `OnModuleInit` + `serviceRole` 네이밍) 폐기 — backend-code-style.md "🔧 설정 관리"의 ConfigModule 사용 원칙 + Phase 2 도메인 테이블 도입 시 IDE 자동완성 지원
 
+---
+
+## 10. 참고 — 1차 프로토타입과의 연결
+
+- **재활용 가능 자산**: NestJS + Supabase + JWT 인증, 모노레포 구조, AI API 연동 경험, EC2 배포 경험
+- **재활용 가능 아이디어**: 1차 ideation 메모(`project_devjournal_ideation.md`)의 "AI 생각 도출" 아이디어가 본 컨셉의 AI 인터뷰로 발전
+- **계승 안 함**: DevJournal의 일기/마인드맵/대시보드 기능은 본 컨셉과 무관 (별도 앱으로 archive)
