@@ -5,10 +5,13 @@
   "scripts": {
     "dev": "turbo dev",
     "dev:frontend": "turbo dev --filter=frontend",
+    "dev:backend": "turbo dev --filter=backend",
     "build": "turbo build",
     "build:frontend": "turbo build --filter=frontend",
+    "build:backend": "turbo build --filter=backend",
     "lint": "turbo lint",
     "test": "turbo test",
+    "type-check": "turbo type-check",
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\" --ignore-path .gitignore"
   },
   "devDependencies": {
