@@ -11,7 +11,7 @@
 ## 사전 작업
 
 - Supabase 신규 프로젝트 `content-pipeline` 생성 (Seoul region)
-- Supabase Auth Providers → GitHub 활성화 (GitHub OAuth App 발급 필요)
+- Supabase Auth Providers → Google 활성화 (Google Cloud OAuth 2.0 Client ID 발급 필요)
 - Supabase Auth Redirect URLs 에 `http://localhost:3000/auth/callback` 추가
 - `apps/backend/.env` + `apps/frontend/.env.local` 작성 (`.env.example`도 같이 커밋)
 
