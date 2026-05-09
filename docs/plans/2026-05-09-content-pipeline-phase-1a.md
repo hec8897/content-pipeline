@@ -68,8 +68,11 @@
 
 ## Task 9 — Frontend Login + Callback
 
-- `src/app/(auth)/layout.tsx` (centered)
-- `src/app/(auth)/login/page.tsx` — GitHub OAuth 버튼 (devjournal `LoginPageView` 참고)
+- 디자인 출처 = `claude_design/design_handoff_content_pipeline 2/design_files/login.html` (좌측 폼 + 우측 파이프라인 비주얼 패널 + 하단 라이브 티커). Tailwind v4 + 디자인 토큰(`bg`/`surface`/`text`/`border`/`accent` 등)으로 옮김.
+- 인증 백엔드는 **Supabase Auth (Google OAuth) 유지** — 핸드오프의 NextAuth.js 권장은 무시.
+- 이메일/비밀번호 폼은 **시각적 placeholder** (실 동작 X), Google 버튼만 `supabase.auth.signInWithOAuth({ provider: 'google' })` 연결.
+- `src/app/(auth)/layout.tsx` — 풀 뷰포트 (centered grid 비활성, 좌우 2-pane)
+- `src/app/(auth)/login/page.tsx` — 'use client', `useSupabase` 사용
 - `src/app/auth/callback/route.ts` — code → session 교환 후 `/` 리다이렉트, 실패 시 `/login?error=`
 
 ## Task 10 — Frontend AuthGuard
