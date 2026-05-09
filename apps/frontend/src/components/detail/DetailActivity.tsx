@@ -1,12 +1,12 @@
-import { ACTIVITY_LOG } from "@/lib/mock-data";
+import { ACTIVITY_LOG } from '@/lib/mock-data';
 
 const tagColor: Record<string, string> = {
-  naver: "text-naver",
-  insta: "text-accent",
-  n8n: "text-warn",
-  api: "text-text-2",
-  db: "text-text-2",
-  ai: "text-accent",
+  naver: 'text-naver',
+  insta: 'text-accent',
+  n8n: 'text-warn',
+  api: 'text-text-2',
+  db: 'text-text-2',
+  ai: 'text-accent',
 };
 
 export function DetailActivity() {
@@ -26,10 +26,10 @@ export function DetailActivity() {
           >
             <span
               className={`w-1.5 h-1.5 rounded-full mt-1.5 ${
-                e.state === "ok" ? "bg-success" : "bg-danger"
+                e.state === 'ok' ? 'bg-success' : 'bg-danger'
               }`}
             />
-            <span className={`uppercase font-semibold ${tagColor[e.tag] ?? "text-text-2"}`}>
+            <span className={`uppercase font-semibold ${tagColor[e.tag] ?? 'text-text-2'}`}>
               [{e.tag}]
             </span>
             <span className="text-text font-sans">{e.note}</span>

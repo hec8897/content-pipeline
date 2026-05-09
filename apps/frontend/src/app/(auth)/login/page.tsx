@@ -1,19 +1,19 @@
-"use client";
+'use client';
 
-import { useState } from "react";
+import { useState } from 'react';
 
-import { LoginForm } from "@/components/auth/LoginForm";
-import { useSupabase } from "@/components/providers/SupabaseProvider";
+import { LoginForm } from '@/components/auth/LoginForm';
+import { useSupabase } from '@/components/providers/SupabaseProvider';
 
-type Mode = "login" | "signup";
+type Mode = 'login' | 'signup';
 
 export default function LoginPage() {
   const supabase = useSupabase();
-  const [mode, setMode] = useState<Mode>("login");
+  const [mode, setMode] = useState<Mode>('login');
 
   const handleGoogleLogin = async () => {
     await supabase.auth.signInWithOAuth({
-      provider: "google",
+      provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
       },
@@ -22,7 +22,7 @@ export default function LoginPage() {
 
   const handleSubmit = () => {
     // 이메일/비밀번호 폼은 시각적 placeholder — Google 버튼만 실 동작
-    alert("이메일/비밀번호 로그인은 프로토타입입니다. Google 로그인을 사용해주세요.");
+    alert('이메일/비밀번호 로그인은 프로토타입입니다. Google 로그인을 사용해주세요.');
   };
 
   return (

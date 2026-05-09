@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useMemo, useState } from "react";
+import { useMemo, useState } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -10,27 +10,27 @@ import {
   useSensor,
   useSensors,
   type DragEndEvent,
-} from "@dnd-kit/core";
+} from '@dnd-kit/core';
 import {
   arrayMove,
   SortableContext,
   rectSortingStrategy,
   sortableKeyboardCoordinates,
   useSortable,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Plus, Sparkles, Trash2, Upload } from "lucide-react";
-import type { CardNewsCard } from "@/lib/types";
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { GripVertical, Plus, Sparkles, Trash2, Upload } from 'lucide-react';
+import type { CardNewsCard } from '@/lib/types';
 
 const PRESETS: { bg: string; fg: string }[] = [
-  { bg: "#1a1a2e", fg: "white" },
-  { bg: "#0a3d2c", fg: "white" },
-  { bg: "#5b5bd6", fg: "white" },
-  { bg: "#c87f0a", fg: "white" },
-  { bg: "#222", fg: "white" },
-  { bg: "#f6f5f1", fg: "#222" },
-  { bg: "#fef3c7", fg: "#3a2e0c" },
-  { bg: "#e0f2fe", fg: "#0c4a6e" },
+  { bg: '#1a1a2e', fg: 'white' },
+  { bg: '#0a3d2c', fg: 'white' },
+  { bg: '#5b5bd6', fg: 'white' },
+  { bg: '#c87f0a', fg: 'white' },
+  { bg: '#222', fg: 'white' },
+  { bg: '#f6f5f1', fg: '#222' },
+  { bg: '#fef3c7', fg: '#3a2e0c' },
+  { bg: '#e0f2fe', fg: '#0c4a6e' },
 ];
 
 type Props = {
@@ -53,14 +53,9 @@ function SortableCard({
   onDelete: () => void;
   canDelete: boolean;
 }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: card.id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: card.id,
+  });
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -77,13 +72,13 @@ function SortableCard({
       onClick={onSelect}
       className={`relative aspect-square rounded-md p-3.5 cursor-pointer flex flex-col justify-between ${
         selected
-          ? "outline outline-2 outline-accent shadow-[0_0_0_4px_var(--color-accent-soft)]"
-          : "outline outline-1 outline-border"
+          ? 'outline outline-2 outline-accent shadow-[0_0_0_4px_var(--color-accent-soft)]'
+          : 'outline outline-1 outline-border'
       }`}
     >
       {/* index pill */}
       <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 bg-black/30 text-white rounded text-[10px] font-mono backdrop-blur">
-        {String(index + 1).padStart(2, "0")}
+        {String(index + 1).padStart(2, '0')}
       </div>
       {/* drag handle */}
       <button
@@ -113,25 +108,21 @@ function SortableCard({
       <div />
       <div
         className={`flex flex-col gap-1 ${
-          card.type === "cover" || card.type === "outro" ? "text-center" : ""
+          card.type === 'cover' || card.type === 'outro' ? 'text-center' : ''
         }`}
       >
-        <h4 className="text-[12px] font-bold whitespace-pre-line leading-tight">
-          {card.title}
-        </h4>
+        <h4 className="text-[12px] font-bold whitespace-pre-line leading-tight">{card.title}</h4>
         {card.subtitle && (
-          <p className="text-[10px] opacity-80 whitespace-pre-line">
-            {card.subtitle}
-          </p>
+          <p className="text-[10px] opacity-80 whitespace-pre-line">{card.subtitle}</p>
         )}
         {card.body && (
           <p
             className="text-[9.5px] opacity-75 whitespace-pre-line leading-snug"
             style={{
-              display: "-webkit-box",
+              display: '-webkit-box',
               WebkitLineClamp: 4,
-              WebkitBoxOrient: "vertical",
-              overflow: "hidden",
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
             }}
           >
             {card.body}
@@ -144,7 +135,7 @@ function SortableCard({
 
 export function CardNewsEditor({ initial, onSave }: Props) {
   const [cards, setCards] = useState<CardNewsCard[]>(initial);
-  const [selectedId, setSelectedId] = useState<string>(initial[0]?.id ?? "");
+  const [selectedId, setSelectedId] = useState<string>(initial[0]?.id ?? '');
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -163,9 +154,7 @@ export function CardNewsEditor({ initial, onSave }: Props) {
   const selectedIdx = cards.findIndex((c) => c.id === selected?.id);
 
   const updateSelected = (patch: Partial<CardNewsCard>) => {
-    setCards((prev) =>
-      prev.map((c) => (c.id === selected.id ? { ...c, ...patch } : c)),
-    );
+    setCards((prev) => prev.map((c) => (c.id === selected.id ? { ...c, ...patch } : c)));
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -182,12 +171,12 @@ export function CardNewsEditor({ initial, onSave }: Props) {
     const id = `c${Date.now()}`;
     const next: CardNewsCard = {
       id,
-      type: "body",
-      num: String(cards.length + 1).padStart(2, "0"),
-      title: "새 카드",
-      body: "내용을 입력하세요.",
-      bg: "#222",
-      fg: "white",
+      type: 'body',
+      num: String(cards.length + 1).padStart(2, '0'),
+      title: '새 카드',
+      body: '내용을 입력하세요.',
+      bg: '#222',
+      fg: 'white',
     };
     setCards([...cards, next]);
     setSelectedId(id);
@@ -196,7 +185,7 @@ export function CardNewsEditor({ initial, onSave }: Props) {
   const deleteSelected = () => {
     if (cards.length <= 2) return;
     setCards((prev) => prev.filter((c) => c.id !== selected.id));
-    setSelectedId(cards[0]?.id ?? "");
+    setSelectedId(cards[0]?.id ?? '');
   };
 
   return (
@@ -223,15 +212,8 @@ export function CardNewsEditor({ initial, onSave }: Props) {
           </div>
         </div>
 
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext
-            items={cards.map((c) => c.id)}
-            strategy={rectSortingStrategy}
-          >
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={cards.map((c) => c.id)} strategy={rectSortingStrategy}>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               {cards.map((c, i) => (
                 <SortableCard
@@ -254,12 +236,9 @@ export function CardNewsEditor({ initial, onSave }: Props) {
         <header className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="px-1.5 py-0.5 rounded bg-surface-2 text-[10px] font-mono text-text-2">
-              {String(selectedIdx + 1).padStart(2, "0")} /{" "}
-              {String(cards.length).padStart(2, "0")}
+              {String(selectedIdx + 1).padStart(2, '0')} / {String(cards.length).padStart(2, '0')}
             </span>
-            <span className="text-[12.5px] font-semibold text-text">
-              카드 편집
-            </span>
+            <span className="text-[12.5px] font-semibold text-text">카드 편집</span>
           </div>
           {cards.length > 2 && (
             <button
@@ -274,37 +253,31 @@ export function CardNewsEditor({ initial, onSave }: Props) {
 
         {/* 제목 */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-[11px] uppercase tracking-wide text-text-3">
-            제목
-          </label>
+          <label className="text-[11px] uppercase tracking-wide text-text-3">제목</label>
           <textarea
             rows={2}
-            value={selected?.title ?? ""}
+            value={selected?.title ?? ''}
             onChange={(e) => updateSelected({ title: e.target.value })}
             className="bg-surface-2 border border-border rounded-md px-2.5 py-1.5 text-[12.5px] outline-none focus:border-accent resize-none"
           />
         </div>
 
         {/* 본문 / 서브타이틀 */}
-        {selected?.type === "cover" ? (
+        {selected?.type === 'cover' ? (
           <div className="flex flex-col gap-1.5">
-            <label className="text-[11px] uppercase tracking-wide text-text-3">
-              서브타이틀
-            </label>
+            <label className="text-[11px] uppercase tracking-wide text-text-3">서브타이틀</label>
             <input
-              value={selected?.subtitle ?? ""}
+              value={selected?.subtitle ?? ''}
               onChange={(e) => updateSelected({ subtitle: e.target.value })}
               className="bg-surface-2 border border-border rounded-md px-2.5 py-1.5 text-[12.5px] outline-none focus:border-accent"
             />
           </div>
         ) : (
           <div className="flex flex-col gap-1.5">
-            <label className="text-[11px] uppercase tracking-wide text-text-3">
-              본문
-            </label>
+            <label className="text-[11px] uppercase tracking-wide text-text-3">본문</label>
             <textarea
               rows={5}
-              value={selected?.body ?? ""}
+              value={selected?.body ?? ''}
               onChange={(e) => updateSelected({ body: e.target.value })}
               className="bg-surface-2 border border-border rounded-md px-2.5 py-1.5 text-[12.5px] outline-none focus:border-accent resize-none"
             />
@@ -313,9 +286,7 @@ export function CardNewsEditor({ initial, onSave }: Props) {
 
         {/* 배경색 */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-[11px] uppercase tracking-wide text-text-3">
-            배경색
-          </label>
+          <label className="text-[11px] uppercase tracking-wide text-text-3">배경색</label>
           <div className="grid grid-cols-8 gap-1.5">
             {PRESETS.map((p) => {
               const active = selected?.bg === p.bg;
@@ -324,9 +295,7 @@ export function CardNewsEditor({ initial, onSave }: Props) {
                   key={p.bg}
                   onClick={() => updateSelected({ bg: p.bg, fg: p.fg })}
                   className={`aspect-square rounded ${
-                    active
-                      ? "outline outline-2 outline-text"
-                      : "outline outline-1 outline-border"
+                    active ? 'outline outline-2 outline-text' : 'outline outline-1 outline-border'
                   }`}
                   style={{ background: p.bg }}
                 />
@@ -336,13 +305,11 @@ export function CardNewsEditor({ initial, onSave }: Props) {
           <div className="flex items-center gap-2">
             <input
               type="color"
-              value={selected?.bg ?? "#000000"}
+              value={selected?.bg ?? '#000000'}
               onChange={(e) => updateSelected({ bg: e.target.value })}
               className="w-7 h-7 rounded border border-border"
             />
-            <span className="text-[11px] font-mono text-text-3">
-              {selected?.bg}
-            </span>
+            <span className="text-[11px] font-mono text-text-3">{selected?.bg}</span>
           </div>
         </div>
 
@@ -359,9 +326,7 @@ export function CardNewsEditor({ initial, onSave }: Props) {
               <Sparkles className="w-3 h-3" /> AI 재생성
             </button>
           </div>
-          <span className="text-[10.5px] font-mono text-text-3">
-            gemini-2.5-flash · 7s 예상
-          </span>
+          <span className="text-[10.5px] font-mono text-text-3">gemini-2.5-flash · 7s 예상</span>
         </div>
 
         <div className="bg-surface-2 rounded p-2 text-[10.5px] text-text-3">

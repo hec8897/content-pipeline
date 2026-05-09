@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { ArrowRight, Sparkles } from "lucide-react";
-import { useNewContent } from "@/components/new/NewContentContext";
-import { routes } from "@/lib/routes";
+import Link from 'next/link';
+import { ArrowRight, Sparkles } from 'lucide-react';
+import { useNewContent } from '@/components/new/NewContentContext';
+import { routes } from '@/lib/routes';
 
 export default function NewTopicPage() {
   const { topic, setTopic } = useNewContent();
@@ -19,8 +19,8 @@ export default function NewTopicPage() {
           <h1
             className="text-[26px] sm:text-[30px] font-semibold text-text"
             style={{
-              fontFamily: "var(--font-serif)",
-              letterSpacing: "-0.6px",
+              fontFamily: 'var(--font-serif)',
+              letterSpacing: '-0.6px',
             }}
           >
             오늘 어떤 이야기를 풀어볼까요?
@@ -46,7 +46,7 @@ export default function NewTopicPage() {
             <Link
               href={routes.newGenerate}
               className={`inline-flex items-center gap-1 px-3.5 py-2 rounded-md text-[12.5px] border border-border text-text-2 hover:bg-surface-2 ${
-                ready ? "" : "opacity-50 pointer-events-none"
+                ready ? '' : 'opacity-50 pointer-events-none'
               }`}
             >
               스킵하고 바로 만들기
@@ -54,7 +54,7 @@ export default function NewTopicPage() {
             <Link
               href={routes.newInterview}
               className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-md text-[12.5px] font-semibold bg-text text-white hover:bg-black ${
-                ready ? "" : "opacity-50 pointer-events-none"
+                ready ? '' : 'opacity-50 pointer-events-none'
               }`}
             >
               다음 <ArrowRight className="w-3.5 h-3.5" />

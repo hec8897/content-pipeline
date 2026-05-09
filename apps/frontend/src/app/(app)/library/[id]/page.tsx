@@ -1,34 +1,29 @@
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import { ChevronLeft, MoreHorizontal, Pencil } from "lucide-react";
-import { PageHeader } from "@/components/shell/PageHeader";
-import { DetailHero } from "@/components/detail/DetailHero";
-import { DetailTabs } from "@/components/detail/DetailTabs";
-import { DetailOverview } from "@/components/detail/DetailOverview";
-import { DetailInsta } from "@/components/detail/DetailInsta";
-import { DetailBlog } from "@/components/detail/DetailBlog";
-import { DetailActivity } from "@/components/detail/DetailActivity";
-import { Button } from "@/components/ui/Button";
-import { LIBRARY_ITEMS } from "@/lib/mock-data";
-import { routes } from "@/lib/routes";
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import { ChevronLeft, MoreHorizontal, Pencil } from 'lucide-react';
+import { PageHeader } from '@/components/shell/PageHeader';
+import { DetailHero } from '@/components/detail/DetailHero';
+import { DetailTabs } from '@/components/detail/DetailTabs';
+import { DetailOverview } from '@/components/detail/DetailOverview';
+import { DetailInsta } from '@/components/detail/DetailInsta';
+import { DetailBlog } from '@/components/detail/DetailBlog';
+import { DetailActivity } from '@/components/detail/DetailActivity';
+import { Button } from '@/components/ui/Button';
+import { LIBRARY_ITEMS } from '@/lib/mock-data';
+import { routes } from '@/lib/routes';
 
-export default async function ContentDetailPage(
-  props: PageProps<"/library/[id]">,
-) {
+export default async function ContentDetailPage(props: PageProps<'/library/[id]'>) {
   const { id } = await props.params;
   const content = LIBRARY_ITEMS.find((c) => c.id === id);
   if (!content) notFound();
 
-  const editLabel = content.state === "draft" ? "이어서 편집" : "편집";
+  const editLabel = content.state === 'draft' ? '이어서 편집' : '편집';
 
   return (
     <>
       <PageHeader
         breadcrumb={
-          <Link
-            href={routes.library}
-            className="inline-flex items-center gap-1 hover:text-text"
-          >
+          <Link href={routes.library} className="inline-flex items-center gap-1 hover:text-text">
             <ChevronLeft className="w-3 h-3" /> 라이브러리
           </Link>
         }

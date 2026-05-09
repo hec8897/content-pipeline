@@ -1,21 +1,21 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import Link from "next/link";
-import { ArrowRight } from "lucide-react";
-import { CardNewsEditor } from "@/components/detail/CardNewsEditor";
-import { CARD_NEWS } from "@/lib/mock-data";
-import { routes } from "@/lib/routes";
+import { useState } from 'react';
+import Link from 'next/link';
+import { ArrowRight } from 'lucide-react';
+import { CardNewsEditor } from '@/components/detail/CardNewsEditor';
+import { CARD_NEWS } from '@/lib/mock-data';
+import { routes } from '@/lib/routes';
 
 const TABS = [
-  { key: "insta", label: "인스타 카드뉴스" },
-  { key: "blog", label: "네이버 블로그" },
+  { key: 'insta', label: '인스타 카드뉴스' },
+  { key: 'blog', label: '네이버 블로그' },
 ] as const;
 
-type TabKey = (typeof TABS)[number]["key"];
+type TabKey = (typeof TABS)[number]['key'];
 
 export default function NewEditPage() {
-  const [tab, setTab] = useState<TabKey>("insta");
+  const [tab, setTab] = useState<TabKey>('insta');
 
   return (
     <div className="flex-1 flex flex-col">
@@ -27,15 +27,11 @@ export default function NewEditPage() {
               key={t.key}
               onClick={() => setTab(t.key)}
               className={`relative py-3 text-[12.5px] ${
-                active
-                  ? "text-text font-semibold"
-                  : "text-text-2 hover:text-text"
+                active ? 'text-text font-semibold' : 'text-text-2 hover:text-text'
               }`}
             >
               {t.label}
-              {active && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-text" />
-              )}
+              {active && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-text" />}
             </button>
           );
         })}
@@ -47,13 +43,12 @@ export default function NewEditPage() {
         </Link>
       </div>
 
-      {tab === "insta" ? (
+      {tab === 'insta' ? (
         <CardNewsEditor initial={CARD_NEWS} />
       ) : (
         <div className="px-7 py-6">
           <div className="max-w-[720px] mx-auto bg-surface border border-border rounded-[10px] p-6 text-[12.5px] text-text-2">
-            블로그 편집기는 곧 추가됩니다. 양산된 본문은 발행 단계에서 그대로
-            사용됩니다.
+            블로그 편집기는 곧 추가됩니다. 양산된 본문은 발행 단계에서 그대로 사용됩니다.
           </div>
         </div>
       )}

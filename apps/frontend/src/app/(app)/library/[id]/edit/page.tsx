@@ -1,16 +1,14 @@
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
-import { PageHeader } from "@/components/shell/PageHeader";
-import { DetailHero } from "@/components/detail/DetailHero";
-import { CardNewsEditor } from "@/components/detail/CardNewsEditor";
-import { Button } from "@/components/ui/Button";
-import { CARD_NEWS, LIBRARY_ITEMS } from "@/lib/mock-data";
-import { routes } from "@/lib/routes";
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import { ChevronLeft } from 'lucide-react';
+import { PageHeader } from '@/components/shell/PageHeader';
+import { DetailHero } from '@/components/detail/DetailHero';
+import { CardNewsEditor } from '@/components/detail/CardNewsEditor';
+import { Button } from '@/components/ui/Button';
+import { CARD_NEWS, LIBRARY_ITEMS } from '@/lib/mock-data';
+import { routes } from '@/lib/routes';
 
-export default async function ContentEditPage(
-  props: PageProps<"/library/[id]/edit">,
-) {
+export default async function ContentEditPage(props: PageProps<'/library/[id]/edit'>) {
   const { id } = await props.params;
   const content = LIBRARY_ITEMS.find((c) => c.id === id);
   if (!content) notFound();

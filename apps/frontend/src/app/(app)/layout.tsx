@@ -1,9 +1,9 @@
-import { AuthGuard } from "@/components/auth/AuthGuard";
-import { MobileBottomNav } from "@/components/shell/MobileBottomNav";
-import { MobileTopBar } from "@/components/shell/MobileTopBar";
-import { Sidebar } from "@/components/shell/Sidebar";
+import { AuthGuard } from '@/components/auth/AuthGuard';
+import { MobileBottomNav } from '@/components/shell/MobileBottomNav';
+import { MobileTopBar } from '@/components/shell/MobileTopBar';
+import { Sidebar } from '@/components/shell/Sidebar';
 
-export default function AppLayout(props: LayoutProps<"/">) {
+export default function AppLayout(props: LayoutProps<'/'>) {
   return (
     <AuthGuard>
       <div className="flex min-h-screen bg-bg">

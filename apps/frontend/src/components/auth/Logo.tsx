@@ -5,7 +5,7 @@ export function Logo({ size = 30 }: { size?: number }) {
       style={{
         width: size,
         height: size,
-        background: "linear-gradient(135deg, var(--color-accent), #8a8af0)",
+        background: 'linear-gradient(135deg, var(--color-accent), #8a8af0)',
       }}
     >
       <svg

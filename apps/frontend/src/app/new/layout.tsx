@@ -1,8 +1,8 @@
-import { AuthGuard } from "@/components/auth/AuthGuard";
-import { NewContentProvider } from "@/components/new/NewContentContext";
-import { StepNav } from "@/components/new/StepNav";
+import { AuthGuard } from '@/components/auth/AuthGuard';
+import { NewContentProvider } from '@/components/new/NewContentContext';
+import { StepNav } from '@/components/new/StepNav';
 
-export default function NewLayout(props: LayoutProps<"/new">) {
+export default function NewLayout(props: LayoutProps<'/new'>) {
   return (
     <AuthGuard>
       <NewContentProvider>

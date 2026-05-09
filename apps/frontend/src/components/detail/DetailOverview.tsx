@@ -1,44 +1,31 @@
-import {
-  ArrowUpRight,
-  Pencil,
-  RotateCw,
-  Download,
-  Copy,
-  Archive,
-} from "lucide-react";
-import type { Content } from "@/lib/types";
-import { Panel } from "@/components/ui/Panel";
-import { ChannelIcon } from "@/components/ui/ChannelIcon";
-import { Sparkline } from "@/components/ui/Sparkline";
-import { INTERVIEW_QUESTIONS, SPARKLINE_DATA } from "@/lib/mock-data";
-import { formatNumber } from "@/lib/format";
+import { ArrowUpRight, Pencil, RotateCw, Download, Copy, Archive } from 'lucide-react';
+import type { Content } from '@/lib/types';
+import { Panel } from '@/components/ui/Panel';
+import { ChannelIcon } from '@/components/ui/ChannelIcon';
+import { Sparkline } from '@/components/ui/Sparkline';
+import { INTERVIEW_QUESTIONS, SPARKLINE_DATA } from '@/lib/mock-data';
+import { formatNumber } from '@/lib/format';
 
 const channelInfo = {
   naver: {
-    name: "네이버 블로그",
-    url: "blog.naver.com/minji.daily",
+    name: '네이버 블로그',
+    url: 'blog.naver.com/minji.daily',
   },
   insta: {
-    name: "인스타그램",
-    url: "instagram.com/minji.daily",
+    name: '인스타그램',
+    url: 'instagram.com/minji.daily',
   },
 } as const;
 
 const actions = [
-  { icon: Pencil, label: "편집" },
-  { icon: RotateCw, label: "다시 발행" },
-  { icon: Download, label: "이미지 ZIP 다운로드" },
-  { icon: Copy, label: "복제" },
-  { icon: Archive, label: "보관함으로" },
+  { icon: Pencil, label: '편집' },
+  { icon: RotateCw, label: '다시 발행' },
+  { icon: Download, label: '이미지 ZIP 다운로드' },
+  { icon: Copy, label: '복제' },
+  { icon: Archive, label: '보관함으로' },
 ];
 
-const tags = [
-  "#성견입양",
-  "#1인가구",
-  "#푸들",
-  "#반려견일상",
-  "#적응기",
-];
+const tags = ['#성견입양', '#1인가구', '#푸들', '#반려견일상', '#적응기'];
 
 export function DetailOverview({ content }: { content: Content }) {
   return (
@@ -55,18 +42,14 @@ export function DetailOverview({ content }: { content: Content }) {
                 >
                   <ChannelIcon channel={ch} size={36} />
                   <div className="min-w-0 flex-1">
-                    <div className="text-[13px] font-semibold text-text">
-                      {info.name}
-                    </div>
+                    <div className="text-[13px] font-semibold text-text">{info.name}</div>
                     <a
                       href={`https://${info.url}`}
                       className="inline-flex items-center gap-0.5 text-[11.5px] text-accent font-mono hover:underline"
                     >
                       {info.url} <ArrowUpRight className="w-3 h-3" />
                     </a>
-                    <div className="text-[11px] text-text-3 mt-0.5">
-                      발행 {content.publishedAt}
-                    </div>
+                    <div className="text-[11px] text-text-3 mt-0.5">발행 {content.publishedAt}</div>
                   </div>
                   <div className="hidden sm:flex items-center gap-4">
                     <div className="text-right">
@@ -82,9 +65,7 @@ export function DetailOverview({ content }: { content: Content }) {
                       <div className="text-[10px] text-text-3">좋아요</div>
                     </div>
                     <div className="text-right">
-                      <div className="text-[14px] font-semibold text-text">
-                        12
-                      </div>
+                      <div className="text-[14px] font-semibold text-text">12</div>
                       <div className="text-[10px] text-text-3">공유</div>
                     </div>
                   </div>
@@ -101,9 +82,7 @@ export function DetailOverview({ content }: { content: Content }) {
                 key={i}
                 className="px-3.5 py-3 border-t border-border first:border-t-0 flex flex-col gap-1"
               >
-                <span className="text-[10.5px] font-mono text-text-3 uppercase">
-                  Q{i + 1}
-                </span>
+                <span className="text-[10.5px] font-mono text-text-3 uppercase">Q{i + 1}</span>
                 <p className="text-[13px] font-medium text-text">{qa.q}</p>
                 <p className="text-[12px] text-text-2">{qa.a}</p>
               </div>

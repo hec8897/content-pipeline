@@ -1,18 +1,18 @@
-"use client";
+'use client';
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from 'react';
 
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from '@supabase/supabase-js';
 
-import { useAuthStore } from "@/lib/auth/store";
-import { createClient } from "@/lib/supabase/client";
+import { useAuthStore } from '@/lib/auth/store';
+import { createClient } from '@/lib/supabase/client';
 
 const SupabaseContext = createContext<SupabaseClient | null>(null);
 
 export function useSupabase() {
   const ctx = useContext(SupabaseContext);
   if (!ctx) {
-    throw new Error("useSupabase must be used inside SupabaseProvider");
+    throw new Error('useSupabase must be used inside SupabaseProvider');
   }
   return ctx;
 }
@@ -37,9 +37,5 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, [supabase, setSession, setInitialized]);
 
-  return (
-    <SupabaseContext.Provider value={supabase}>
-      {children}
-    </SupabaseContext.Provider>
-  );
+  return <SupabaseContext.Provider value={supabase}>{children}</SupabaseContext.Provider>;
 }

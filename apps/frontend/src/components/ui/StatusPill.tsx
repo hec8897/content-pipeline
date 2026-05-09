@@ -1,5 +1,5 @@
-import type { ContentState } from "@/lib/types";
-import { STATE_LABEL } from "@/lib/mock-data";
+import type { ContentState } from '@/lib/types';
+import { STATE_LABEL } from '@/lib/mock-data';
 
 type Kind = ContentState;
 
@@ -8,39 +8,36 @@ type Props = {
   label?: string;
 };
 
-const map: Record<
-  Kind,
-  { bg: string; text: string; dot: string }
-> = {
+const map: Record<Kind, { bg: string; text: string; dot: string }> = {
   live: {
-    bg: "bg-[rgba(47,148,97,0.1)]",
-    text: "text-success",
-    dot: "bg-success",
+    bg: 'bg-[rgba(47,148,97,0.1)]',
+    text: 'text-success',
+    dot: 'bg-success',
   },
   scheduled: {
-    bg: "bg-[rgba(200,127,10,0.1)]",
-    text: "text-warn",
-    dot: "bg-warn",
+    bg: 'bg-[rgba(200,127,10,0.1)]',
+    text: 'text-warn',
+    dot: 'bg-warn',
   },
   pending: {
-    bg: "bg-[rgba(200,127,10,0.1)]",
-    text: "text-warn",
-    dot: "bg-warn",
+    bg: 'bg-[rgba(200,127,10,0.1)]',
+    text: 'text-warn',
+    dot: 'bg-warn',
   },
   processing: {
-    bg: "bg-accent-soft",
-    text: "text-accent",
-    dot: "bg-accent",
+    bg: 'bg-accent-soft',
+    text: 'text-accent',
+    dot: 'bg-accent',
   },
   failed: {
-    bg: "bg-[rgba(215,58,58,0.1)]",
-    text: "text-danger",
-    dot: "bg-danger",
+    bg: 'bg-[rgba(215,58,58,0.1)]',
+    text: 'text-danger',
+    dot: 'bg-danger',
   },
   draft: {
-    bg: "bg-surface-2",
-    text: "text-text-2",
-    dot: "bg-text-3",
+    bg: 'bg-surface-2',
+    text: 'text-text-2',
+    dot: 'bg-text-3',
   },
 };
 

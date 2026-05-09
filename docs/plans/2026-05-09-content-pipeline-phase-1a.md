@@ -16,6 +16,7 @@
 - `apps/backend/.env` + `apps/frontend/.env.local` 작성 (`.env.example`도 같이 커밋)
 
 환경 변수:
+
 - backend: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `FRONTEND_URL=http://localhost:3000`, `PORT=3001`
 - frontend: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 

@@ -1,24 +1,21 @@
-import { Eye, Heart, MessageSquare } from "lucide-react";
-import { NAVER_BLOG_BODY, NAVER_BLOG_TITLE } from "@/lib/mock-data";
+import { Eye, Heart, MessageSquare } from 'lucide-react';
+import { NAVER_BLOG_BODY, NAVER_BLOG_TITLE } from '@/lib/mock-data';
 
 function renderMarkdown(md: string) {
-  const lines = md.split("\n");
+  const lines = md.split('\n');
   const out: React.ReactNode[] = [];
   let para: string[] = [];
   let key = 0;
 
   const flush = () => {
     if (para.length === 0) return;
-    const text = para.join(" ");
+    const text = para.join(' ');
     out.push(
       <p
         key={key++}
         className="my-3 text-[14px] leading-[1.85] text-text"
         dangerouslySetInnerHTML={{
-          __html: text.replace(
-            /\*\*([^*]+)\*\*/g,
-            "<strong>$1</strong>",
-          ),
+          __html: text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>'),
         }}
       />,
     );
@@ -26,17 +23,14 @@ function renderMarkdown(md: string) {
   };
 
   for (const line of lines) {
-    if (line.startsWith("## ")) {
+    if (line.startsWith('## ')) {
       flush();
       out.push(
-        <h2
-          key={key++}
-          className="mt-6 mb-2 text-[18px] font-bold text-text"
-        >
+        <h2 key={key++} className="mt-6 mb-2 text-[18px] font-bold text-text">
           {line.slice(3)}
         </h2>,
       );
-    } else if (line.startsWith("> ")) {
+    } else if (line.startsWith('> ')) {
       flush();
       out.push(
         <blockquote
@@ -46,28 +40,23 @@ function renderMarkdown(md: string) {
           {line.slice(2)}
         </blockquote>,
       );
-    } else if (line.startsWith("- ")) {
+    } else if (line.startsWith('- ')) {
       flush();
       out.push(
         <li key={key++} className="text-[14px] leading-[1.85] text-text">
           <span
             dangerouslySetInnerHTML={{
-              __html: line
-                .slice(2)
-                .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>"),
+              __html: line.slice(2).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>'),
             }}
           />
         </li>,
       );
-    } else if (line.trim() === "") {
+    } else if (line.trim() === '') {
       flush();
-    } else if (line.startsWith("#")) {
+    } else if (line.startsWith('#')) {
       flush();
       out.push(
-        <p
-          key={key++}
-          className="my-3 text-[12.5px] text-naver font-medium"
-        >
+        <p key={key++} className="my-3 text-[12.5px] text-naver font-medium">
           {line}
         </p>,
       );
@@ -90,15 +79,11 @@ export function DetailBlog() {
           </span>
         </header>
         <div className="px-6 pt-5 pb-2 flex items-center justify-between">
-          <span className="text-[11.5px] font-medium text-naver">
-            #일상 / 반려동물
-          </span>
+          <span className="text-[11.5px] font-medium text-naver">#일상 / 반려동물</span>
           <span className="text-[11px] text-text-3">이웃 1,247명</span>
         </div>
         <div className="px-6 pt-3 pb-5 border-b border-border">
-          <h1 className="text-[22px] font-bold text-text leading-tight">
-            {NAVER_BLOG_TITLE}
-          </h1>
+          <h1 className="text-[22px] font-bold text-text leading-tight">{NAVER_BLOG_TITLE}</h1>
           <div className="flex items-center gap-3 mt-2 text-[11px] text-text-3">
             <span>2026.05.07</span>
             <span className="inline-flex items-center gap-1">
@@ -112,9 +97,7 @@ export function DetailBlog() {
             </span>
           </div>
         </div>
-        <div className="px-6 py-5 prose-sm">
-          {renderMarkdown(NAVER_BLOG_BODY)}
-        </div>
+        <div className="px-6 py-5 prose-sm">{renderMarkdown(NAVER_BLOG_BODY)}</div>
       </article>
     </div>
   );

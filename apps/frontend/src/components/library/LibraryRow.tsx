@@ -1,10 +1,10 @@
-import Link from "next/link";
-import { ChevronRight } from "lucide-react";
-import type { Content } from "@/lib/types";
-import { StatusPill } from "@/components/ui/StatusPill";
-import { ChannelIcon } from "@/components/ui/ChannelIcon";
-import { routes } from "@/lib/routes";
-import { formatNumber } from "@/lib/format";
+import Link from 'next/link';
+import { ChevronRight } from 'lucide-react';
+import type { Content } from '@/lib/types';
+import { StatusPill } from '@/components/ui/StatusPill';
+import { ChannelIcon } from '@/components/ui/ChannelIcon';
+import { routes } from '@/lib/routes';
+import { formatNumber } from '@/lib/format';
 
 export function LibraryRow({ content }: { content: Content }) {
   return (
@@ -20,12 +20,8 @@ export function LibraryRow({ content }: { content: Content }) {
           {content.thumbText}
         </div>
         <div className="min-w-0">
-          <div className="text-[12.5px] font-medium text-text truncate">
-            {content.title}
-          </div>
-          <div className="text-[11px] text-text-3 truncate">
-            {content.topic}
-          </div>
+          <div className="text-[12.5px] font-medium text-text truncate">{content.title}</div>
+          <div className="text-[11px] text-text-3 truncate">{content.topic}</div>
         </div>
       </div>
       <div>
@@ -36,11 +32,9 @@ export function LibraryRow({ content }: { content: Content }) {
           <ChannelIcon key={ch} channel={ch} size={18} />
         ))}
       </div>
-      <div className="text-[11px] font-mono text-text-2">
-        {content.publishedAt}
-      </div>
+      <div className="text-[11px] font-mono text-text-2">{content.publishedAt}</div>
       <div className="text-[11.5px] text-text-2 text-right">
-        {content.state === "live" ? formatNumber(content.views) : "—"}
+        {content.state === 'live' ? formatNumber(content.views) : '—'}
       </div>
       <ChevronRight className="w-4 h-4 text-text-3" />
     </Link>

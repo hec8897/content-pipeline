@@ -379,19 +379,19 @@ n8n에 들어오는 트래픽은 두 종류:
 
 ## 7. 기술 스택 결정 (확정)
 
-| 영역              | 결정                                                                                                                               |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| **앱 위치**       | `/` (루트)                                                                                                                          |
-| **MVP 스코프**    | **Solid+ MVP** (Tistory 제외 변형) — n8n 자동 발행 (네이버+인스타) + 스케줄러, 예상 17~22일                                        |
-| **AI LLM**        | `gemini-2.5-flash` 메인 + 폴백 체인 (`2.5-flash-lite` → `2.0-flash` → `2.0-flash-lite`)                                            |
-| **AI Embedding**  | `gemini-embedding-001` (768dim) — 추후 콘텐츠 유사도/검색 확장 시 활용                                                             |
-| **AI SDK**        | `@google/generative-ai`                                                                                                             |
-| **백엔드**        | NestJS                                                                                                                              |
-| **프론트엔드**    | Next.js App Router                                                                                                                  |
-| **DB**            | Supabase — content-pipeline 전용 프로젝트. auth.users / RLS / 마이그레이션 모두 독립                                               |
-| **카드뉴스 렌더** | HTML → Image (Puppeteer 또는 Satori), 단색 배경 + 큰 타이포                                                                        |
-| **인증**          | Supabase Auth + `SupabaseAuthGuard`                                                                                                 |
-| **결제**          | Lean MVP out-of-scope. 3차 이후 Toss Payments 우선 검토                                                                            |
+| 영역              | 결정                                                                                        |
+| ----------------- | ------------------------------------------------------------------------------------------- |
+| **앱 위치**       | `/` (루트)                                                                                  |
+| **MVP 스코프**    | **Solid+ MVP** (Tistory 제외 변형) — n8n 자동 발행 (네이버+인스타) + 스케줄러, 예상 17~22일 |
+| **AI LLM**        | `gemini-2.5-flash` 메인 + 폴백 체인 (`2.5-flash-lite` → `2.0-flash` → `2.0-flash-lite`)     |
+| **AI Embedding**  | `gemini-embedding-001` (768dim) — 추후 콘텐츠 유사도/검색 확장 시 활용                      |
+| **AI SDK**        | `@google/generative-ai`                                                                     |
+| **백엔드**        | NestJS                                                                                      |
+| **프론트엔드**    | Next.js App Router                                                                          |
+| **DB**            | Supabase — content-pipeline 전용 프로젝트. auth.users / RLS / 마이그레이션 모두 독립        |
+| **카드뉴스 렌더** | HTML → Image (Puppeteer 또는 Satori), 단색 배경 + 큰 타이포                                 |
+| **인증**          | Supabase Auth + `SupabaseAuthGuard`                                                         |
+| **결제**          | Lean MVP out-of-scope. 3차 이후 Toss Payments 우선 검토                                     |
 
 ## 7.5. plan 단계 / 후속 사이클로 미룬 결정
 
@@ -413,8 +413,8 @@ n8n에 들어오는 트래픽은 두 종류:
 
 ## 8. Plans
 
-| Phase | Plan                                                                | 상태                 |
-| ----- | ------------------------------------------------------------------- | -------------------- |
+| Phase | Plan                                                              | 상태                 |
+| ----- | ----------------------------------------------------------------- | -------------------- |
 | 1a    | [Phase 1a — 인증 기반](./2026-05-09-content-pipeline-phase-1a.md) | 작성 완료, 실행 대기 |
 
 > 직전 Phase 완료 후 다음 plan을 순차 작성. Phase 1a가 굳혀야 Phase 2 위에 얹을 토대가 명확해짐.

@@ -1,10 +1,10 @@
-import Link from "next/link";
-import { Eye, Heart } from "lucide-react";
-import type { Content } from "@/lib/types";
-import { StatusPill } from "@/components/ui/StatusPill";
-import { ChannelIcon } from "@/components/ui/ChannelIcon";
-import { routes } from "@/lib/routes";
-import { formatNumber } from "@/lib/format";
+import Link from 'next/link';
+import { Eye, Heart } from 'lucide-react';
+import type { Content } from '@/lib/types';
+import { StatusPill } from '@/components/ui/StatusPill';
+import { ChannelIcon } from '@/components/ui/ChannelIcon';
+import { routes } from '@/lib/routes';
+import { formatNumber } from '@/lib/format';
 
 export function LibraryCard({ content }: { content: Content }) {
   return (
@@ -33,10 +33,10 @@ export function LibraryCard({ content }: { content: Content }) {
         <h3
           className="text-[13px] font-semibold text-text"
           style={{
-            display: "-webkit-box",
+            display: '-webkit-box',
             WebkitLineClamp: 2,
-            WebkitBoxOrient: "vertical",
-            overflow: "hidden",
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
           }}
         >
           {content.title}
@@ -47,7 +47,7 @@ export function LibraryCard({ content }: { content: Content }) {
           <span className="font-mono shrink-0">{content.publishedAt}</span>
         </div>
 
-        {content.state === "live" && (
+        {content.state === 'live' && (
           <div className="mt-2 pt-2 border-t border-border flex items-center gap-3 text-[11px] text-text-2">
             <span className="inline-flex items-center gap-1">
               <Eye className="w-3 h-3" /> {formatNumber(content.views)}

@@ -14,15 +14,8 @@
   "prettier.useEditorConfig": false,
 
   "eslint.useFlatConfig": true,
-  "eslint.workingDirectories": [
-    { "pattern": "apps/*" }
-  ],
-  "eslint.validate": [
-    "javascript",
-    "typescript",
-    "javascriptreact",
-    "typescriptreact"
-  ],
+  "eslint.workingDirectories": [{ "pattern": "apps/*" }],
+  "eslint.validate": ["javascript", "typescript", "javascriptreact", "typescriptreact"],
 
   "[typescript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"

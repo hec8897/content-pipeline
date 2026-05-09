@@ -1,5 +1,5 @@
-import { ChannelIcon } from "@/components/ui/ChannelIcon";
-import type { Channel } from "@/lib/types";
+import { ChannelIcon } from '@/components/ui/ChannelIcon';
+import type { Channel } from '@/lib/types';
 
 type Props = {
   channel: Channel;

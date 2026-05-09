@@ -1,12 +1,6 @@
-export type ContentState =
-  | "draft"
-  | "processing"
-  | "scheduled"
-  | "live"
-  | "failed"
-  | "pending";
+export type ContentState = 'draft' | 'processing' | 'scheduled' | 'live' | 'failed' | 'pending';
 
-export type Channel = "naver" | "insta";
+export type Channel = 'naver' | 'insta';
 
 export type Content = {
   id: string;
@@ -26,7 +20,7 @@ export type QueueItem = {
   id: string;
   contentTitle: string;
   channel: Channel;
-  state: "processing" | "pending" | "scheduled" | "failed";
+  state: 'processing' | 'pending' | 'scheduled' | 'failed';
   startedAt: string;
   note: string;
   attempt: number;
@@ -34,7 +28,7 @@ export type QueueItem = {
 
 export type CardNewsCard = {
   id: string;
-  type: "cover" | "body" | "outro";
+  type: 'cover' | 'body' | 'outro';
   title: string;
   subtitle?: string;
   body?: string;
@@ -53,7 +47,7 @@ export type InterviewQA = {
 
 export type ActivityEvent = {
   ts: string;
-  tag: "naver" | "insta" | "n8n" | "api" | "db" | "ai";
+  tag: 'naver' | 'insta' | 'n8n' | 'api' | 'db' | 'ai';
   note: string;
-  state: "ok" | "fail";
+  state: 'ok' | 'fail';
 };
