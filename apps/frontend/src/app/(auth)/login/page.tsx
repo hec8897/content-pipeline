@@ -3,18 +3,21 @@
 import { useState } from "react";
 
 import { LoginForm } from "@/components/auth/LoginForm";
+import { useSupabase } from "@/components/providers/SupabaseProvider";
 
 type Mode = "login" | "signup";
 
 export default function LoginPage() {
+  const supabase = useSupabase();
   const [mode, setMode] = useState<Mode>("login");
 
-  const handleGoogleLogin = () => {
-    // Phase 1a Task 7~8 (Supabase client + Provider) 완료 후 실 OAuth 호출로 교체:
-    //   const supabase = useSupabase();
-    //   await supabase.auth.signInWithOAuth({ provider: 'google',
-    //     options: { redirectTo: `${origin}/auth/callback` } });
-    alert("Google OAuth 연결은 Task 7~8 이후 활성화됩니다.");
+  const handleGoogleLogin = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
   };
 
   const handleSubmit = () => {
