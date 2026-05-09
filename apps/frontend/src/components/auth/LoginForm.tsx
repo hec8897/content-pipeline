@@ -11,7 +11,6 @@ type Props = {
   setMode: (m: Mode) => void;
   isMobile?: boolean;
   onGoogleLogin: () => void;
-  onSubmit?: () => void;
 };
 
 const inputClass =
@@ -21,7 +20,7 @@ const inputClass =
 
 const labelClass = 'text-[11.5px] font-semibold text-text-2 tracking-[0.1px]';
 
-export function LoginForm({ mode, setMode, isMobile, onGoogleLogin, onSubmit }: Props) {
+export function LoginForm({ mode, setMode, isMobile, onGoogleLogin }: Props) {
   const [showPw, setShowPw] = useState(false);
   const [email, setEmail] = useState('minji@daily.kr');
   const [pw, setPw] = useState('');
@@ -30,13 +29,7 @@ export function LoginForm({ mode, setMode, isMobile, onGoogleLogin, onSubmit }: 
   const isSignup = mode === 'signup';
 
   return (
-    <form
-      className="w-full max-w-[380px]"
-      onSubmit={(e) => {
-        e.preventDefault();
-        onSubmit?.();
-      }}
-    >
+    <form className="w-full max-w-[380px]" onSubmit={(e) => e.preventDefault()}>
       <div className="flex items-center gap-2.5 mb-6">
         <Logo />
         <span className="font-semibold text-[14.5px] tracking-[-0.2px] text-text">
@@ -162,10 +155,13 @@ export function LoginForm({ mode, setMode, isMobile, onGoogleLogin, onSubmit }: 
 
         <button
           type="submit"
-          className="w-full px-3.5 py-3 bg-text text-white rounded-lg text-[13.5px] font-semibold inline-flex items-center justify-center gap-2 hover:bg-black active:translate-y-px transition-colors"
+          disabled
+          aria-disabled="true"
+          title="이메일/비밀번호 로그인은 곧 추가됩니다 — 지금은 Google 로그인을 사용해주세요"
+          className="w-full px-3.5 py-3 bg-text text-white rounded-lg text-[13.5px] font-semibold inline-flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed enabled:hover:bg-black enabled:active:translate-y-px"
         >
           {isSignup ? '계정 만들기' : '로그인'}
-          <span className="opacity-50 font-mono text-[11px]">↵</span>
+          <span className="opacity-50 font-mono text-[11px]">곧 지원</span>
         </button>
 
         <div className="flex items-center gap-2.5 text-text-3 text-[11px] my-1">

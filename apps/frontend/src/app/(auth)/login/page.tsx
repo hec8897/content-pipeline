@@ -20,21 +20,11 @@ export default function LoginPage() {
     });
   };
 
-  const handleSubmit = () => {
-    // 이메일/비밀번호 폼은 시각적 placeholder — Google 버튼만 실 동작
-    alert('이메일/비밀번호 로그인은 프로토타입입니다. Google 로그인을 사용해주세요.');
-  };
-
   return (
     <div className="min-h-screen flex flex-col bg-bg">
       <main className="flex-1 flex items-center justify-center px-6 py-7">
         <div className="w-full max-w-[380px] md:bg-surface md:border md:border-border md:rounded-[14px] md:px-9 md:pt-9 md:pb-8 md:shadow-[0_1px_2px_rgba(0,0,0,0.04),0_24px_60px_rgba(0,0,0,0.06)]">
-          <LoginForm
-            mode={mode}
-            setMode={setMode}
-            onGoogleLogin={handleGoogleLogin}
-            onSubmit={handleSubmit}
-          />
+          <LoginForm mode={mode} setMode={setMode} onGoogleLogin={handleGoogleLogin} />
         </div>
       </main>
 
