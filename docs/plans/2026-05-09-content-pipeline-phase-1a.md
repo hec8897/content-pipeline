@@ -40,16 +40,15 @@
 - `database.types.ts`는 빈 placeholder (Phase 2에서 자동 생성으로 교체)
 - `AppModule`에 `ConfigModule.forRoot({ isGlobal: true })` + `SupabaseModule` 추가
 
-## Task 4 — Backend SupabaseAuthGuard (TDD)
+## Task 4 — Backend SupabaseAuthGuard
 
 - 베끼기: `toy-monorepo/apps/devjournal/backend/src/auth/supabase-auth.guard.ts`
-- spec 새로 작성 — Bearer 헤더 / `?token=` 쿼리 / 토큰 없음 / 검증 실패 4 케이스
-- 테스트 통과 확인
+- 테스트 코드는 작성하지 않음 (토큰 관리 — 후속 사이클로 보류)
 
 ## Task 5 — Backend HealthController
 
 - public `GET /api/health` → `{ status: 'ok', timestamp }`
-- spec 1개
+- 테스트 코드는 작성하지 않음
 
 ## Task 6 — Backend main.ts 정비
 
@@ -83,7 +82,7 @@
 `pnpm dev` → 브라우저:
 
 1. 시크릿 창으로 `localhost:3000` → `/login` 리다이렉트 ✓
-2. GitHub 로그인 → `/auth/callback` → `/` 진입, 사이드바 보임 ✓
+2. Google 로그인 → `/auth/callback` → `/` 진입, 사이드바 보임 ✓
 3. Supabase Dashboard → Authentication → Users 에 1행 추가 ✓
 4. `curl localhost:3001/api/health` → 200 ✓
 
@@ -96,7 +95,7 @@
 
 ## 완료 기준
 
-- type-check + test 모두 pass
+- type-check pass (test 신규 작성은 본 phase 스코프 외 — 토큰 관리)
 - `pnpm dev` 로 둘 다 기동 + Health 200
 - GitHub 로그인 → 보호 라우트 진입까지 한 번 성공
 - 호스티드 Supabase에 `pgcrypto` 활성화
