@@ -5,7 +5,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { useAuthStore } from '@/lib/auth/store';
-import { createClient } from '@/lib/supabase/client';
+import { createBrowserSupabaseClient } from '@/lib/supabase/client';
 
 const SupabaseContext = createContext<SupabaseClient | null>(null);
 
@@ -18,7 +18,7 @@ export function useSupabase() {
 }
 
 export function SupabaseProvider({ children }: { children: React.ReactNode }) {
-  const [supabase] = useState(() => createClient());
+  const [supabase] = useState(() => createBrowserSupabaseClient());
   const setSession = useAuthStore((s) => s.setSession);
   const setInitialized = useAuthStore((s) => s.setInitialized);
 
