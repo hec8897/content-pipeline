@@ -5,7 +5,7 @@
 한국 채널(네이버 블로그 / 인스타그램) 특화 콘텐츠 자동화 파이프라인.
 사용자가 주제 한 줄을 던지면 AI 멀티턴 인터뷰로 본인 경험을 끌어내고, 인스타 카드뉴스 + 블로그 글 묶음을 양산해 자동 발행한다.
 
-자세한 컨셉 / 아키텍처 / Phase 분배는 [`2026-04-28-content-pipeline-saas-design.md`](./2026-04-28-content-pipeline-saas-design.md) 참고.
+자세한 컨셉 / 아키텍처 / Phase 분배는 [`docs/plans/2026-04-28-content-pipeline-saas-design.md`](./docs/plans/2026-04-28-content-pipeline-saas-design.md) 참고.
 
 ---
 
@@ -31,7 +31,7 @@ content-pipeline/
 │   ├── backend/         # NestJS API
 │   └── frontend/        # Next.js 웹앱
 ├── packages/            # 공용 타입 / zod 스키마 (필요해지면)
-├── 2026-04-28-content-pipeline-saas-design.md   # 컨셉 + 아키텍처 결정 문서
+├── docs/plans/          # 디자인 + Phase plan 문서
 ├── CLAUDE.md            # Claude Code 작업 가이드
 ├── pnpm-workspace.yaml
 ├── turbo.json

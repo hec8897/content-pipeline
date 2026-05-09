@@ -204,23 +204,42 @@
 
 ### Phase 분배 (가설, 정확한 일수는 plan에서)
 
+> **2026-05-09 재정렬**: 원래 Phase 1에 묶여있던 인프라(ECS/n8n/Cloudflare)를 **Phase 1b로 분리하여 Phase 4 다음으로 지연**. 1~4는 로컬 + 호스티드 Supabase + Gemini API 로 굴러가므로 dogfooding 가치가 충분히 쌓이기 전까지 AWS/Cloudflare 셋업 비용을 미룸.
+
+**로컬 단계 (1~4)**
+
 ```
-Phase 1 — 기반 (~2~3일)
-  - 프로젝트 셋업
-  - n8n self-host (EC2 + Docker)
-  - 인증 + DB 스키마
+Phase 1a — 인증 기반 (~2일)
+  - 신규 Supabase 프로젝트 생성 + 익스텐션 마이그레이션
+  - NestJS: SupabaseModule / SupabaseAuthGuard / Health (devjournal 1차 패턴 재활용)
+  - Next.js: login / callback / AuthGuard (기존 5개 screens + new flow의 mock-data 유지)
 
 Phase 2 — AI 인터뷰 (~2~3일)
-  - 멀티턴 prompt 설계 + 인터뷰 UX
+  - 도메인 테이블 첫 마이그레이션 (topics, interview_sessions, interview_messages)
+  - Gemini 멀티턴 prompt 설계 + 매 턴 동적 LLM 호출
+  - frontend new/interview 흐름 ↔ backend API 연결
 
 Phase 3 — AI 양산 (~2~3일)
-  - 카드뉴스 생성 (HTML→Image)
+  - drafts 테이블 마이그레이션
+  - 카드뉴스 생성 (HTML→Image, 단색 배경 + 큰 타이포)
   - 블로그 마크다운 생성
 
 Phase 4 — 미리보기 + 편집 (~2일)
+  - frontend 편집기 ↔ backend API 연결
+```
+
+**클라우드 단계 (5~9)**
+
+```
+Phase 1b — 인프라 (~3~4일)  ← 지연됨
+  - ECS Fargate + ECR (Docker 이미지 빌드/푸시)
+  - ALB 호스트 라우팅 (api.<도메인>, n8n.<도메인>)
+  - n8n self-host (ECS Task)
+  - Cloudflare DNS + Zero Trust Access (n8n UI 보호)
+  - GitHub Actions OIDC → ECR/ECS 배포 파이프라인
 
 Phase 5 — 발행 인프라 (~2일)
-  - 발행 큐 DB 스키마 + 앱 ↔ n8n webhook
+  - 발행 큐 DB 스키마 (publish_queue, SoT 원칙) + 앱 ↔ n8n webhook + HMAC
   - 스케줄러 (node-cron, 예약 발행)
 
 Phase 6 — 네이버 자동 (~1~2일)
@@ -236,7 +255,7 @@ Phase 8 — 통합 + dogfooding (~2일)
   - End-to-end 테스트
   - 본인 첫 콘텐츠 자동 발행 검증
 
-→ 합계 약 17~22일 (버퍼 포함 ~24일)
+→ 합계 약 18~23일 (버퍼 포함 ~25일)
 ```
 
 ### 1차 사용자 = 개발자 본인 (Dogfooding)
@@ -394,11 +413,13 @@ n8n에 들어오는 트래픽은 두 종류:
 
 ## 8. Plans
 
-| Phase | Plan                                                              | 상태                 |
-| ----- | ----------------------------------------------------------------- | -------------------- |
-| 1     | [Phase 1 — 기반](../plans/2026-05-01-content-pipeline-phase-1.md) | 작성 완료, 실행 대기 |
+| Phase | Plan                                                                | 상태                 |
+| ----- | ------------------------------------------------------------------- | -------------------- |
+| 1a    | [Phase 1a — 인증 기반](./2026-05-09-content-pipeline-phase-1a.md) | 작성 완료, 실행 대기 |
 
-> Phase 2~8 plan은 직전 Phase 완료 후 순차 작성. Phase 1이 굳혀야 Phase 2 위에 얹을 토대가 명확해짐.
+> 직전 Phase 완료 후 다음 plan을 순차 작성. Phase 1a가 굳혀야 Phase 2 위에 얹을 토대가 명확해짐.
+>
+> **폐기**: `toy-monorepo/docs/superpowers/plans/2026-05-01-content-pipeline-phase-1.md` — `apps/content-pipeline/`을 toy-monorepo 안에 신설하는 전제로 작성됐으나, 이후 별도 레포(`/Users/dawoon/Desktop/dev/content-pipeline`)로 분리되어 디렉토리 가정이 어긋남. 결정만 본 design 문서에 흡수하고 plan은 새로 작성.
 
 ---
 
@@ -436,6 +457,9 @@ n8n에 들어오는 트래픽은 두 종류:
 - **2026-05-01**: Phase 1 plan 작성 완료. 핵심 결정 — 인증 = Supabase Auth + `SupabaseAuthGuard` 1차 devjournal 패턴 1:1 재활용 (NestJS JWT 옵션 폐기), 도메인 테이블 = `cp_*` 접두어로 `public` 스키마 격리(별도 DB 스키마 분리는 미사용 — Supabase PostgREST 노출 설정 회피), n8n 영속 = 같은 Supabase Postgres의 별도 `n8n` schema + `n8n_runner` role, 배포 자동화 = GitHub Actions OIDC → ECR/ECS update-service
 - **2026-05-01**: **DB 결정 변경** — content-pipeline 전용 **신규 Supabase 프로젝트** 생성 (1차 devjournal Supabase는 pause). 이전 결정(2026-04-28 "1차와 같은 인스턴스" + 2026-05-01 "`cp_*` 접두어 + public schema") 폐기. 사유 — (1) 일반 SaaS 출시 대상이라 1차 dogfooding 사용자와 분리 필요 (2) RLS/마이그레이션 격리로 사고 위험 ↓ (3) 1차 pause로 무료 슬롯 재배치 가능. 영향 — 도메인 테이블 접두어 제거(자유로운 이름), `auth.users` 분리(양쪽 별도 가입), `.env`에 cp 전용 키 사용, n8n schema는 cp Supabase Postgres에 위치(이전 결정 그대로)
 - **2026-05-01**: `SupabaseService` 구현 패턴 = devjournal 1차 실구현 1:1 재활용 (`ConfigService.getOrThrow` + constructor 주입 + `SupabaseClient<Database>` 타입드 + `anon`/`admin` 네이밍). 이전 plan 초안(`process.env` + `OnModuleInit` + `serviceRole` 네이밍) 폐기 — backend-code-style.md "🔧 설정 관리"의 ConfigModule 사용 원칙 + Phase 2 도메인 테이블 도입 시 IDE 자동완성 지원
+- **2026-05-09**: **Phase 분배 재정렬** — 원래 Phase 1(기반)을 **1a(인증, 로컬)** + **1b(인프라, 클라우드)** 로 분리하고 1b를 Phase 4 다음으로 지연. 사유: Phase 2~4(인터뷰/양산/편집)는 로컬 + 호스티드 Supabase + Gemini API 만으로 dogfooding 가능. AWS ECS / n8n self-host / Cloudflare Access 셋업은 dogfooding 가치가 충분히 쌓인 후로 미뤄 초반 인프라 부담을 줄임. 발행(Phase 5~7)은 클라우드 인프라가 필수라 1b 다음에 위치.
+- **2026-05-09**: **레포 구조 변경** — content-pipeline 을 `toy-monorepo` 안의 `apps/content-pipeline/`이 아니라 **별도 레포 `/Users/dawoon/Desktop/dev/content-pipeline`** (pnpm + turborepo) 로 분리. 사유: 일반 SaaS 출시 대상이라 toy 성격 레포에서 분리 필요. 영향 — 2026-05-01 Phase 1 plan 폐기, 신규 plan은 본 레포의 `docs/plans/` 에 작성
+- **2026-05-09**: **모바일 앱 확장 시 인증 재사용** — 추후 iOS/Android 또는 RN/Flutter 앱으로 확장하더라도 **Supabase Auth SDK 그대로 재활용** (Firebase Auth 도입 X). 사유: 두 인증 시스템 병행 시 사용자 매핑 / RLS 분기 비용이 큼. 푸시 알림이 필요해도 FCM 은 device token 기반이라 Auth 와 독립 — Firebase 프로젝트는 FCM sender 용도로만 사용 가능
 
 ---
 

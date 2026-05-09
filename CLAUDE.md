@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `content-pipeline` 은 한국 채널 특화 콘텐츠 자동화 SaaS. 사용자가 주제 한 줄을 던지면 AI가 멀티턴 인터뷰로 경험을 끌어내고, 인스타 카드뉴스 + 블로그 글 묶음을 양산해 한국 채널(네이버 블로그 메일 트릭, Meta Graph API 인스타)로 자동 발행한다.
 
-제품/아키텍처 결정의 단일 진실 원천은 루트의 **`2026-04-28-content-pipeline-saas-design.md`** 다. 제품/아키텍처에 영향 가는 작업을 시작하기 전에 반드시 먼저 읽을 것 — brainstorming 결과, Phase 기반 MVP 스코프, 결정 이력이 모두 여기 있음.
+제품/아키텍처 결정의 단일 진실 원천은 **`docs/plans/2026-04-28-content-pipeline-saas-design.md`** 다. 제품/아키텍처에 영향 가는 작업을 시작하기 전에 반드시 먼저 읽을 것 — brainstorming 결과, Phase 기반 MVP 스코프, 결정 이력이 모두 여기 있음. Phase 별 구현 plan 은 같은 디렉토리(`docs/plans/`)에 함께 둔다.
 
 ## 명령어
 
