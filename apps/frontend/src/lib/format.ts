@@ -1,5 +1,5 @@
 export function formatNumber(n: number): string {
-  return n.toLocaleString("en-US");
+  return n.toLocaleString('en-US');
 }
 
 export function formatDateShort(s: string): string {

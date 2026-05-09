@@ -1,6 +1,6 @@
-import { CardNewsView } from "./CardNewsView";
-import { Panel } from "@/components/ui/Panel";
-import { CARD_NEWS } from "@/lib/mock-data";
+import { CardNewsView } from './CardNewsView';
+import { Panel } from '@/components/ui/Panel';
+import { CARD_NEWS } from '@/lib/mock-data';
 
 const CAPTION = `🐶 5살 푸들 입양한 지 한 달, 1인 가구가 알게 된 것들
 

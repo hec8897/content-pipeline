@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
-import { useNewContent } from "@/components/new/NewContentContext";
-import { INTERVIEW_QUESTIONS } from "@/lib/mock-data";
-import { routes } from "@/lib/routes";
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { ArrowLeft, ArrowRight, Sparkles } from 'lucide-react';
+import { useNewContent } from '@/components/new/NewContentContext';
+import { INTERVIEW_QUESTIONS } from '@/lib/mock-data';
+import { routes } from '@/lib/routes';
 
 const MIN_Q = 3;
 const MAX_Q = 8;
@@ -17,7 +17,7 @@ export default function NewInterviewPage() {
 
   const total = Math.min(INTERVIEW_QUESTIONS.length, MAX_Q);
   const qa = INTERVIEW_QUESTIONS[idx];
-  const value = answers[idx] ?? "";
+  const value = answers[idx] ?? '';
   const canGoNext = value.trim().length > 0;
   const reachedMin = idx + 1 >= MIN_Q;
 
@@ -39,10 +39,11 @@ export default function NewInterviewPage() {
       <div className="max-w-[720px] w-full mx-auto mb-8 flex flex-col gap-2">
         <div className="flex items-center justify-between text-[11.5px] text-text-3 font-mono">
           <span>
-            Q{idx + 1} / {total}{" "}
-            <span className="text-text-3">(선택)</span>
+            Q{idx + 1} / {total} <span className="text-text-3">(선택)</span>
           </span>
-          <span>최소 {MIN_Q} · 최대 {MAX_Q}</span>
+          <span>
+            최소 {MIN_Q} · 최대 {MAX_Q}
+          </span>
         </div>
         <div className="h-1 bg-surface-2 rounded-full overflow-hidden">
           <div
@@ -61,7 +62,7 @@ export default function NewInterviewPage() {
             rows={5}
             value={value}
             onChange={(e) => setAnswer(idx, e.target.value)}
-            placeholder={qa.placeholder ?? "답변을 입력해주세요"}
+            placeholder={qa.placeholder ?? '답변을 입력해주세요'}
             className="bg-surface border border-border rounded-[10px] px-4 py-3 text-[14px] outline-none focus:border-accent resize-none"
           />
           <div className="flex items-center gap-2">
@@ -87,8 +88,7 @@ export default function NewInterviewPage() {
               disabled={!canGoNext}
               className="ml-auto inline-flex items-center gap-1.5 px-4 py-2 rounded-md text-[12.5px] font-semibold bg-text text-white hover:bg-black disabled:opacity-40"
             >
-              {idx + 1 >= total ? "양산하기" : "다음"}{" "}
-              <ArrowRight className="w-3.5 h-3.5" />
+              {idx + 1 >= total ? '양산하기' : '다음'} <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>

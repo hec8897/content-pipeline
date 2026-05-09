@@ -16,10 +16,10 @@
 | 모노레포  | pnpm workspaces + Turborepo                               |
 | 백엔드    | NestJS 11 (TypeScript)                                    |
 | 프론트    | Next.js 16 (App Router) + Tailwind v4                     |
-| DB / 인증 | Supabase (Postgres + Auth) — *Phase 1 도입 예정*          |
-| 자동화    | n8n self-host (internal) — *Phase 5+ 도입 예정*           |
+| DB / 인증 | Supabase (Postgres + Auth) — _Phase 1 도입 예정_          |
+| 자동화    | n8n self-host (internal) — _Phase 5+ 도입 예정_           |
 | AI        | Google Gemini (`@google/generative-ai`, `2.5-flash` 메인) |
-| 배포      | ECS Fargate + ECR + Cloudflare — *후속 단계*              |
+| 배포      | ECS Fargate + ECR + Cloudflare — _후속 단계_              |
 
 ---
 

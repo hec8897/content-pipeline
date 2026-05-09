@@ -1,11 +1,6 @@
-"use client";
+'use client';
 
-import {
-  createContext,
-  useContext,
-  useState,
-  type ReactNode,
-} from "react";
+import { createContext, useContext, useState, type ReactNode } from 'react';
 
 export type NewContentState = {
   topic: string;
@@ -17,7 +12,7 @@ export type NewContentState = {
 const Ctx = createContext<NewContentState | null>(null);
 
 export function NewContentProvider({ children }: { children: ReactNode }) {
-  const [topic, setTopic] = useState("");
+  const [topic, setTopic] = useState('');
   const [answers, setAnswers] = useState<string[]>([]);
 
   const setAnswer = (idx: number, value: string) =>
@@ -27,16 +22,11 @@ export function NewContentProvider({ children }: { children: ReactNode }) {
       return next;
     });
 
-  return (
-    <Ctx.Provider value={{ topic, setTopic, answers, setAnswer }}>
-      {children}
-    </Ctx.Provider>
-  );
+  return <Ctx.Provider value={{ topic, setTopic, answers, setAnswer }}>{children}</Ctx.Provider>;
 }
 
 export function useNewContent() {
   const ctx = useContext(Ctx);
-  if (!ctx)
-    throw new Error("useNewContent must be used inside NewContentProvider");
+  if (!ctx) throw new Error('useNewContent must be used inside NewContentProvider');
   return ctx;
 }

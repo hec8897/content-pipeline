@@ -46,6 +46,7 @@ packages/     # 자리만 비워둠. 공용 타입/zod 스키마 필요해질 �
 ```
 
 Turborepo 태스크 파이프라인 (`turbo.json`):
+
 - `build` 는 `^build` 의존, 출력은 `dist/**` 와 `.next/**` (`.next/cache` 제외)
 - `dev` 는 `cache: false, persistent: true`
 - `test`, `type-check` 는 `^build` 의존
@@ -63,6 +64,7 @@ Turborepo 태스크 파이프라인 (`turbo.json`):
 - **배포**: ECS Fargate + ECR, 단일 VPC public subnet only (NAT 없음). `n8n.<도메인>` UI 는 Cloudflare Access (Zero Trust) 게이트, `/webhook/*` 는 public + 백엔드 HMAC 시그니처.
 - **CI/CD**: GitHub Actions OIDC → ECR push → `aws ecs update-service --force-new-deployment`.
 - **AI**: `@google/generative-ai` SDK, `gemini-2.5-flash` 메인 + 폴백 체인 (`2.5-flash-lite → 2.0-flash → 2.0-flash-lite`).
+- **로컬 개발**: `apps/backend/.env` + `apps/frontend/.env.local` 에 cp 전용 Supabase 신규 프로젝트의 `SUPABASE_URL` / `SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY` 가 필요 (각 패키지의 `.env(.local).example` 참고). 마이그레이션은 `supabase/migrations/` 디렉토리 하에 raw SQL 로 관리, Dashboard SQL Editor 또는 MCP `apply_migration` 으로 적용.
 
 ## 컨벤션
 

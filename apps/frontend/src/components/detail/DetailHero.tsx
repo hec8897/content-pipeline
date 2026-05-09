@@ -1,17 +1,17 @@
-import type { Content } from "@/lib/types";
-import { StatusPill } from "@/components/ui/StatusPill";
-import { ChannelIcon } from "@/components/ui/ChannelIcon";
-import { formatNumber } from "@/lib/format";
+import type { Content } from '@/lib/types';
+import { StatusPill } from '@/components/ui/StatusPill';
+import { ChannelIcon } from '@/components/ui/ChannelIcon';
+import { formatNumber } from '@/lib/format';
 
 type Props = {
   content: Content;
 };
 
 const metrics = (c: Content) => [
-  { label: "조회", value: formatNumber(c.views) },
-  { label: "좋아요", value: formatNumber(c.likes) },
-  { label: "공유", value: "12" },
-  { label: "댓글", value: "8" },
+  { label: '조회', value: formatNumber(c.views) },
+  { label: '좋아요', value: formatNumber(c.likes) },
+  { label: '공유', value: '12' },
+  { label: '댓글', value: '8' },
 ];
 
 export function DetailHero({ content }: Props) {
@@ -30,24 +30,18 @@ export function DetailHero({ content }: Props) {
             {content.channels.map((ch) => (
               <ChannelIcon key={ch} channel={ch} size={18} />
             ))}
-            <span className="text-[11px] font-mono text-text-3">
-              {content.id}
-            </span>
+            <span className="text-[11px] font-mono text-text-3">{content.id}</span>
           </div>
           <div className="text-[12.5px] text-text-2">
             {content.topic} · {content.publishedAt}
           </div>
         </div>
-        {content.state === "live" && (
+        {content.state === 'live' && (
           <div className="grid grid-cols-4 gap-4 md:gap-6 shrink-0">
             {metrics(content).map((m) => (
               <div key={m.label} className="flex flex-col items-end">
-                <span className="text-[16px] font-semibold text-text">
-                  {m.value}
-                </span>
-                <span className="text-[10.5px] text-text-3 uppercase tracking-wide">
-                  {m.label}
-                </span>
+                <span className="text-[16px] font-semibold text-text">{m.value}</span>
+                <span className="text-[10.5px] text-text-3 uppercase tracking-wide">{m.label}</span>
               </div>
             ))}
           </div>

@@ -1,7 +1,7 @@
-import Link from "next/link";
-import type { Content } from "@/lib/types";
-import { StatusPill } from "@/components/ui/StatusPill";
-import { routes } from "@/lib/routes";
+import Link from 'next/link';
+import type { Content } from '@/lib/types';
+import { StatusPill } from '@/components/ui/StatusPill';
+import { routes } from '@/lib/routes';
 
 export function RecentWorkRow({ content }: { content: Content }) {
   return (
@@ -16,9 +16,7 @@ export function RecentWorkRow({ content }: { content: Content }) {
         {content.thumbText}
       </div>
       <div className="min-w-0 flex-1">
-        <div className="text-[12.5px] font-medium text-text truncate">
-          {content.title}
-        </div>
+        <div className="text-[12.5px] font-medium text-text truncate">{content.title}</div>
         <div className="text-[11px] text-text-3 truncate">
           {content.topic} · {content.publishedAt}
         </div>

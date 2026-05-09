@@ -1,22 +1,26 @@
-import Link from "next/link";
-import { Plus, RefreshCw } from "lucide-react";
-import { PageHeader } from "@/components/shell/PageHeader";
-import { Stat } from "@/components/ui/Stat";
-import { Panel } from "@/components/ui/Panel";
-import { ChannelIcon } from "@/components/ui/ChannelIcon";
-import { Button } from "@/components/ui/Button";
-import { RecentWorkRow } from "@/components/home/RecentWorkRow";
-import { ChannelStat } from "@/components/home/ChannelStat";
-import { LIBRARY_ITEMS } from "@/lib/mock-data";
-import { routes } from "@/lib/routes";
+import Link from 'next/link';
+import { Plus, RefreshCw } from 'lucide-react';
+import { PageHeader } from '@/components/shell/PageHeader';
+import { Stat } from '@/components/ui/Stat';
+import { Panel } from '@/components/ui/Panel';
+import { ChannelIcon } from '@/components/ui/ChannelIcon';
+import { Button } from '@/components/ui/Button';
+import { RecentWorkRow } from '@/components/home/RecentWorkRow';
+import { ChannelStat } from '@/components/home/ChannelStat';
+import { LIBRARY_ITEMS } from '@/lib/mock-data';
+import { routes } from '@/lib/routes';
 
 export default function DashboardPage() {
-  const scheduled = LIBRARY_ITEMS.filter((i) => i.state === "scheduled");
+  const scheduled = LIBRARY_ITEMS.filter((i) => i.state === 'scheduled');
 
   return (
     <>
       <PageHeader
-        title={<>안녕, 민지 <span className="ml-1">👋</span></>}
+        title={
+          <>
+            안녕, 민지 <span className="ml-1">👋</span>
+          </>
+        }
         subtitle="이번 주, 콘텐츠 3개 발행됨 · 발행 큐에 2개 대기 중"
         actions={
           <>
@@ -36,19 +40,10 @@ export default function DashboardPage() {
       <div className="px-7 py-6 flex flex-col gap-5">
         {/* 4 stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Stat
-            label="이번 달 콘텐츠"
-            value="3"
-            trend="+2 지난 주"
-          />
+          <Stat label="이번 달 콘텐츠" value="3" trend="+2 지난 주" />
           <Stat label="총 조회수" value="4,319" trend="+1,284 7일" />
           <Stat label="발행 성공률" value="92%" trend="11/12" />
-          <Stat
-            label="평균 양산 시간"
-            value="47s"
-            trend="목표 60s"
-            trendKind="success"
-          />
+          <Stat label="평균 양산 시간" value="47s" trend="목표 60s" trendKind="success" />
         </div>
 
         {/* 2-col layout */}
@@ -58,10 +53,7 @@ export default function DashboardPage() {
             title="최근 작업"
             sub={`${LIBRARY_ITEMS.length}개`}
             actions={
-              <Link
-                href={routes.library}
-                className="text-[11.5px] text-text-2 hover:text-text"
-              >
+              <Link href={routes.library} className="text-[11.5px] text-text-2 hover:text-text">
                 전체 보기 →
               </Link>
             }
@@ -83,8 +75,8 @@ export default function DashboardPage() {
                   </div>
                 ) : (
                   scheduled.map((c) => {
-                    const [date, time] = c.publishedAt.split(" ");
-                    const [, month, day] = date.split(".");
+                    const [date, time] = c.publishedAt.split(' ');
+                    const [, month, day] = date.split('.');
                     return (
                       <div
                         key={c.id}
@@ -94,19 +86,13 @@ export default function DashboardPage() {
                           <div className="text-[15px] font-mono font-semibold text-text leading-none">
                             {day}
                           </div>
-                          <div className="text-[10px] font-mono text-text-3 mt-0.5">
-                            {month}월
-                          </div>
+                          <div className="text-[10px] font-mono text-text-3 mt-0.5">{month}월</div>
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="text-[12.5px] font-medium text-text truncate">
                             {c.title}
                           </div>
-                          {time && (
-                            <div className="text-[11px] text-text-3">
-                              {time}
-                            </div>
-                          )}
+                          {time && <div className="text-[11px] text-text-3">{time}</div>}
                         </div>
                         <div className="flex items-center gap-1">
                           {c.channels.map((ch) => (
