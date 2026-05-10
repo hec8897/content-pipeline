@@ -1,13 +1,13 @@
 import Link from 'next/link';
 import { Plus, RefreshCw } from 'lucide-react';
-import { PageHeader } from '@/components/shell/PageHeader';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Stat } from '@/components/ui/Stat';
 import { Panel } from '@/components/ui/Panel';
 import { ChannelIcon } from '@/components/ui/ChannelIcon';
 import { Button } from '@/components/ui/Button';
-import { RecentWorkRow } from '@/components/home/RecentWorkRow';
-import { ChannelStat } from '@/components/home/ChannelStat';
-import { LIBRARY_ITEMS } from '@/lib/mock-data';
+import { RecentWorkRow } from '@/features/home/components/RecentWorkRow';
+import { ChannelStat } from '@/features/home/components/ChannelStat';
+import { LIBRARY_ITEMS } from '@/mocks';
 import { routes } from '@/lib/routes';
 
 export default function DashboardPage() {

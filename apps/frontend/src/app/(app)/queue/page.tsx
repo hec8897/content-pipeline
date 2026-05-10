@@ -1,12 +1,12 @@
 import { ScrollText } from 'lucide-react';
-import { PageHeader } from '@/components/shell/PageHeader';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Panel } from '@/components/ui/Panel';
 import { Button } from '@/components/ui/Button';
-import { QueueStat } from '@/components/queue/QueueStat';
-import { QueueRow } from '@/components/queue/QueueRow';
-import { PipelineStep } from '@/components/queue/PipelineStep';
-import { QUEUE_ITEMS } from '@/lib/mock-data';
-import type { QueueItem } from '@/lib/types';
+import { QueueStat } from '@/features/queue/components/QueueStat';
+import { QueueRow } from '@/features/queue/components/QueueRow';
+import { PipelineStep } from '@/features/queue/components/PipelineStep';
+import { QUEUE_ITEMS } from '@/mocks';
+import type { QueueItem } from '@/types';
 
 export default function QueuePage() {
   const groups: { key: QueueItem['state']; label: string }[] = [

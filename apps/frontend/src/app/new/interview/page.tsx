@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, ArrowRight, Sparkles } from 'lucide-react';
-import { useNewContent } from '@/components/new/NewContentContext';
-import { INTERVIEW_QUESTIONS } from '@/lib/mock-data';
+import { useNewContent } from '@/features/new-content/context';
+import { INTERVIEW_QUESTIONS } from '@/mocks';
 import { routes } from '@/lib/routes';
 
 const MIN_Q = 3;

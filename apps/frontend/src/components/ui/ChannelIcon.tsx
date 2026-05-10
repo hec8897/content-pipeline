@@ -1,4 +1,4 @@
-import type { Channel } from '@/lib/types';
+import type { Channel } from '@/types';
 
 type Props = {
   channel: Channel;

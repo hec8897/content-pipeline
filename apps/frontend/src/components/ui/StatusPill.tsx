@@ -1,5 +1,5 @@
-import type { ContentState } from '@/lib/types';
-import { STATE_LABEL } from '@/lib/mock-data';
+import type { ContentState } from '@/types';
+import { STATE_LABEL } from '@/mocks';
 
 type Kind = ContentState;
 

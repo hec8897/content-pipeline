@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 
-import { SupabaseProvider } from '@/components/providers/SupabaseProvider';
+import { SupabaseProvider } from '@/providers/SupabaseProvider';
 
 export const metadata: Metadata = {
   title: 'content-pipeline',

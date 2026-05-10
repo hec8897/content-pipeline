@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { ArrowRight, Sparkles } from 'lucide-react';
-import { useNewContent } from '@/components/new/NewContentContext';
+import { useNewContent } from '@/features/new-content/context';
 import { routes } from '@/lib/routes';
 
 export default function NewTopicPage() {

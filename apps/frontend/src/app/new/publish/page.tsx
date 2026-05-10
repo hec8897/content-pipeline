@@ -6,7 +6,7 @@ import { Calendar, Send, Zap } from 'lucide-react';
 import { ChannelIcon } from '@/components/ui/ChannelIcon';
 import { Panel } from '@/components/ui/Panel';
 import { routes } from '@/lib/routes';
-import type { Channel } from '@/lib/types';
+import type { Channel } from '@/types';
 
 const CHANNELS: { key: Channel; label: string; sub: string }[] = [
   {

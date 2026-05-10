@@ -1,7 +1,7 @@
-import { AuthGuard } from '@/components/auth/AuthGuard';
-import { MobileBottomNav } from '@/components/shell/MobileBottomNav';
-import { MobileTopBar } from '@/components/shell/MobileTopBar';
-import { Sidebar } from '@/components/shell/Sidebar';
+import { AuthGuard } from '@/features/auth/components/AuthGuard';
+import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
+import { MobileTopBar } from '@/components/layout/MobileTopBar';
+import { Sidebar } from '@/components/layout/Sidebar';
 
 export default function AppLayout(props: LayoutProps<'/'>) {
   return (

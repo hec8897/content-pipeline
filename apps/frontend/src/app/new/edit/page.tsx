@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
-import { CardNewsEditor } from '@/components/detail/CardNewsEditor';
-import { CARD_NEWS } from '@/lib/mock-data';
+import { CardNewsEditor } from '@/features/detail/components/CardNewsEditor';
+import { CARD_NEWS } from '@/mocks';
 import { routes } from '@/lib/routes';
 
 const TABS = [

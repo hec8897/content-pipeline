@@ -1,4 +1,4 @@
-import { PageHeader } from '@/components/shell/PageHeader';
+import { PageHeader } from '@/components/layout/PageHeader';
 
 export default function ChannelsPage() {
   return (
