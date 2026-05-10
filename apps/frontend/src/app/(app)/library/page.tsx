@@ -1,6 +1,6 @@
-import { PageHeader } from '@/components/shell/PageHeader';
-import { LibraryGrid } from '@/components/library/LibraryGrid';
-import { LIBRARY_ITEMS } from '@/lib/mock-data';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { LibraryGrid } from '@/features/library/components/LibraryGrid';
+import { LIBRARY_ITEMS } from '@/mocks';
 
 export default function LibraryPage() {
   const counts = LIBRARY_ITEMS.reduce<Record<string, number>>((acc, p) => {

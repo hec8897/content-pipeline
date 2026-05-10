@@ -1,11 +1,11 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ChevronLeft } from 'lucide-react';
-import { PageHeader } from '@/components/shell/PageHeader';
-import { DetailHero } from '@/components/detail/DetailHero';
-import { CardNewsEditor } from '@/components/detail/CardNewsEditor';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { DetailHero } from '@/features/detail/components/DetailHero';
+import { CardNewsEditor } from '@/features/detail/components/CardNewsEditor';
 import { Button } from '@/components/ui/Button';
-import { CARD_NEWS, LIBRARY_ITEMS } from '@/lib/mock-data';
+import { CARD_NEWS, LIBRARY_ITEMS } from '@/mocks';
 import { routes } from '@/lib/routes';
 
 export default async function ContentEditPage(props: PageProps<'/library/[id]/edit'>) {

@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 
-import { LoginForm } from '@/components/auth/LoginForm';
-import { useSupabase } from '@/components/providers/SupabaseProvider';
+import { LoginForm } from '@/features/auth/components/LoginForm';
+import { useSupabase } from '@/providers/SupabaseProvider';
 
 type Mode = 'login' | 'signup';
 

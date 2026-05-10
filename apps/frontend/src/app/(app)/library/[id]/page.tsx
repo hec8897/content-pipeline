@@ -1,15 +1,15 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ChevronLeft, MoreHorizontal, Pencil } from 'lucide-react';
-import { PageHeader } from '@/components/shell/PageHeader';
-import { DetailHero } from '@/components/detail/DetailHero';
-import { DetailTabs } from '@/components/detail/DetailTabs';
-import { DetailOverview } from '@/components/detail/DetailOverview';
-import { DetailInsta } from '@/components/detail/DetailInsta';
-import { DetailBlog } from '@/components/detail/DetailBlog';
-import { DetailActivity } from '@/components/detail/DetailActivity';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { DetailHero } from '@/features/detail/components/DetailHero';
+import { DetailTabs } from '@/features/detail/components/DetailTabs';
+import { DetailOverview } from '@/features/detail/components/DetailOverview';
+import { DetailInsta } from '@/features/detail/components/DetailInsta';
+import { DetailBlog } from '@/features/detail/components/DetailBlog';
+import { DetailActivity } from '@/features/detail/components/DetailActivity';
 import { Button } from '@/components/ui/Button';
-import { LIBRARY_ITEMS } from '@/lib/mock-data';
+import { LIBRARY_ITEMS } from '@/mocks';
 import { routes } from '@/lib/routes';
 
 export default async function ContentDetailPage(props: PageProps<'/library/[id]'>) {
