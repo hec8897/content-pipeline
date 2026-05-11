@@ -52,7 +52,7 @@ export default function NewInterviewPage() {
 
   async function submit() {
     const content = draft.trim();
-    if (!content || !session) return;
+    if (!content || !session || !latestAssistant) return;
 
     setDraft('');
     setError(null);
@@ -62,7 +62,7 @@ export default function NewInterviewPage() {
     const optimistic: InterviewMessage = {
       id: tempId,
       session_id: session.id,
-      turn: latestAssistant!.turn,
+      turn: latestAssistant.turn,
       role: 'user',
       content,
       created_at: new Date().toISOString(),

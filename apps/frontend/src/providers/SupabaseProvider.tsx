@@ -5,7 +5,6 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { useAuthStore } from '@/features/auth/store';
-import { setAccessTokenGetter } from '@/lib/api/client';
 import { createBrowserSupabaseClient } from '@/lib/supabase/client';
 
 const SupabaseContext = createContext<SupabaseClient | null>(null);
@@ -24,13 +23,6 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
   const setInitialized = useAuthStore((s) => s.setInitialized);
 
   useEffect(() => {
-    setAccessTokenGetter(async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      return session?.access_token ?? null;
-    });
-
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setInitialized();
