@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 
+import { QueryProvider } from '@/providers/QueryProvider';
 import { SupabaseProvider } from '@/providers/SupabaseProvider';
 
 export const metadata: Metadata = {
@@ -16,7 +17,9 @@ export default function RootLayout({
   return (
     <html lang="ko" className="h-full antialiased">
       <body className="min-h-full">
-        <SupabaseProvider>{children}</SupabaseProvider>
+        <QueryProvider>
+          <SupabaseProvider>{children}</SupabaseProvider>
+        </QueryProvider>
       </body>
     </html>
   );
