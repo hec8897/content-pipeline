@@ -1,28 +1,68 @@
 'use client';
 
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useState,
+  type Dispatch,
+  type ReactNode,
+  type SetStateAction,
+} from 'react';
+
+import type { InterviewMessage, InterviewSession } from '@/lib/api/types';
 
 export type NewContentState = {
-  topic: string;
-  setTopic: (s: string) => void;
-  answers: string[];
-  setAnswer: (idx: number, value: string) => void;
+  topicTitle: string;
+  setTopicTitle: Dispatch<SetStateAction<string>>;
+  topicId: string | null;
+  setTopicId: Dispatch<SetStateAction<string | null>>;
+  session: InterviewSession | null;
+  setSession: Dispatch<SetStateAction<InterviewSession | null>>;
+  messages: InterviewMessage[];
+  setMessages: Dispatch<SetStateAction<InterviewMessage[]>>;
+  appendMessage: (m: InterviewMessage) => void;
+  reset: () => void;
 };
 
 const Ctx = createContext<NewContentState | null>(null);
 
 export function NewContentProvider({ children }: { children: ReactNode }) {
-  const [topic, setTopic] = useState('');
-  const [answers, setAnswers] = useState<string[]>([]);
+  const [topicTitle, setTopicTitle] = useState('');
+  const [topicId, setTopicId] = useState<string | null>(null);
+  const [session, setSession] = useState<InterviewSession | null>(null);
+  const [messages, setMessages] = useState<InterviewMessage[]>([]);
 
-  const setAnswer = (idx: number, value: string) =>
-    setAnswers((prev) => {
-      const next = [...prev];
-      next[idx] = value;
-      return next;
-    });
+  const appendMessage = useCallback(
+    (m: InterviewMessage) => setMessages((prev) => [...prev, m]),
+    [],
+  );
 
-  return <Ctx.Provider value={{ topic, setTopic, answers, setAnswer }}>{children}</Ctx.Provider>;
+  const reset = useCallback(() => {
+    setTopicTitle('');
+    setTopicId(null);
+    setSession(null);
+    setMessages([]);
+  }, []);
+
+  return (
+    <Ctx.Provider
+      value={{
+        topicTitle,
+        setTopicTitle,
+        topicId,
+        setTopicId,
+        session,
+        setSession,
+        messages,
+        setMessages,
+        appendMessage,
+        reset,
+      }}
+    >
+      {children}
+    </Ctx.Provider>
+  );
 }
 
 export function useNewContent() {
