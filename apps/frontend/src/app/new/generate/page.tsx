@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
+import { useNewContent } from '@/features/new-content/context';
 import { routes } from '@/lib/routes';
 
 const STEPS = [
@@ -23,10 +24,15 @@ const LOG_LINES = [
 
 export default function NewGeneratePage() {
   const router = useRouter();
+  const { topicId } = useNewContent();
   const [active, setActive] = useState(0);
   const [logs, setLogs] = useState<string[]>([]);
 
   useEffect(() => {
+    if (!topicId) {
+      router.replace(routes.newContent);
+      return;
+    }
     const stepTimers: ReturnType<typeof setTimeout>[] = [];
     STEPS.forEach((_, i) => {
       stepTimers.push(setTimeout(() => setActive(i + 1), (i + 1) * 800));
@@ -37,7 +43,9 @@ export default function NewGeneratePage() {
     const done = setTimeout(() => router.push(routes.newEdit), 4500);
     stepTimers.push(done);
     return () => stepTimers.forEach((t) => clearTimeout(t));
-  }, [router]);
+  }, [router, topicId]);
+
+  if (!topicId) return null;
 
   return (
     <div className="flex-1 flex items-center justify-center px-5 py-10">

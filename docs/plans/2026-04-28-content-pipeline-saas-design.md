@@ -413,9 +413,10 @@ n8n에 들어오는 트래픽은 두 종류:
 
 ## 8. Plans
 
-| Phase | Plan                                                              | 상태                 |
-| ----- | ----------------------------------------------------------------- | -------------------- |
-| 1a    | [Phase 1a — 인증 기반](./2026-05-09-content-pipeline-phase-1a.md) | 작성 완료, 실행 대기 |
+| Phase | Plan                                                                | 상태                              |
+| ----- | ------------------------------------------------------------------- | --------------------------------- |
+| 1a    | [Phase 1a — 인증 기반](./2026-05-09-content-pipeline-phase-1a.md)   | 완료 (#1)                         |
+| 2     | [Phase 2 — AI 인터뷰](./2026-05-10-content-pipeline-phase-2.md)     | backend 완료 (#3), frontend 진행 중 |
 
 > 직전 Phase 완료 후 다음 plan을 순차 작성. Phase 1a가 굳혀야 Phase 2 위에 얹을 토대가 명확해짐.
 >
@@ -460,6 +461,9 @@ n8n에 들어오는 트래픽은 두 종류:
 - **2026-05-09**: **Phase 분배 재정렬** — 원래 Phase 1(기반)을 **1a(인증, 로컬)** + **1b(인프라, 클라우드)** 로 분리하고 1b를 Phase 4 다음으로 지연. 사유: Phase 2~4(인터뷰/양산/편집)는 로컬 + 호스티드 Supabase + Gemini API 만으로 dogfooding 가능. AWS ECS / n8n self-host / Cloudflare Access 셋업은 dogfooding 가치가 충분히 쌓인 후로 미뤄 초반 인프라 부담을 줄임. 발행(Phase 5~7)은 클라우드 인프라가 필수라 1b 다음에 위치.
 - **2026-05-09**: **레포 구조 변경** — content-pipeline 을 `toy-monorepo` 안의 `apps/content-pipeline/`이 아니라 **별도 레포 `/Users/dawoon/Desktop/dev/content-pipeline`** (pnpm + turborepo) 로 분리. 사유: 일반 SaaS 출시 대상이라 toy 성격 레포에서 분리 필요. 영향 — 2026-05-01 Phase 1 plan 폐기, 신규 plan은 본 레포의 `docs/plans/` 에 작성
 - **2026-05-09**: **모바일 앱 확장 시 인증 재사용** — 추후 iOS/Android 또는 RN/Flutter 앱으로 확장하더라도 **Supabase Auth SDK 그대로 재활용** (Firebase Auth 도입 X). 사유: 두 인증 시스템 병행 시 사용자 매핑 / RLS 분기 비용이 큼. 푸시 알림이 필요해도 FCM 은 device token 기반이라 Auth 와 독립 — Firebase 프로젝트는 FCM sender 용도로만 사용 가능
+- **2026-05-10**: Phase 2 plan 확정. 도메인 = `topics` / `interview_sessions` / `interview_messages` 3 테이블 + RLS. `(topic_id) where status='active'` partial unique 로 active session 단일성, `(session_id, turn, role)` unique 로 같은 turn = assistant Q + user A 한 쌍 강제. backend 는 admin(service-role) 로 RLS 우회 + controller 단 ownership 직접 확인 (`NotFound` vs `Forbidden` 분리). AI 인터뷰 상태머신 = MIN(3) ≤ N < MAX(8) 구간만 enough judge LLM 호출 (비용 최적화), MAX 도달 시 judge 없이 `max_reached` 강제 종료. Gemini 호출은 인터뷰어 / judge 별도 — 페르소나 `systemInstruction` (자연어 질문) vs YES/NO 강제 출력으로 역할 분리
+- **2026-05-11**: 프론트엔드 API 레이어 도구 = **axios + TanStack Query** 채택. axios instance 의 request interceptor 가 `createBrowserSupabaseClient()` 싱글톤에서 직접 token 조회 → 페이지/훅에서 `supabase` 인자 전파 제거. TanStack Query 는 Phase 3 의 refresh hydrate / 목록 캐싱 / mutation invalidation 자리 선점 (본 Phase 는 mutation-only 라 `useMutation` 마이그레이션은 Phase 3 와 함께 일괄). 후보 — 모듈 레벨 `setAccessTokenGetter` 패턴은 SupabaseProvider mount 순서 의존 race 우려로 폐기, fetch 직접 사용은 인터셉터 확장성 부족으로 폐기
+- **2026-05-11**: Supabase API 키 = **publishable / secret 시스템 (`sb_publishable_*` / `sb_secret_*`)** 채택. legacy anon/service_role JWT 키가 신규 프로젝트에서 signature reject 되는 케이스 → 새 시스템으로 전환. 코드 변경 없이 env 값만 교체 (변수 이름은 기존 `SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY` 유지 — 향후 별도 리네임 PR 후보)
 
 ---
 

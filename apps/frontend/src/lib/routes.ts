@@ -8,6 +8,7 @@ export const routes = {
   settings: '/settings',
   newContent: '/new',
   newInterview: '/new/interview',
+  newReview: '/new/review',
   newGenerate: '/new/generate',
   newEdit: '/new/edit',
   newPublish: '/new/publish',
