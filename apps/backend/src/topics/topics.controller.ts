@@ -3,6 +3,7 @@ import type { Request } from 'express';
 import type { User } from '@supabase/supabase-js';
 
 import { SupabaseAuthGuard } from '@/auth/supabase-auth.guard';
+import { DraftsService } from '@/drafts/drafts.service';
 import { InterviewService } from '@/interview/interview.service';
 
 import { CreateTopicDto } from './dto/create-topic.dto';
@@ -16,6 +17,7 @@ export class TopicsController {
   constructor(
     private readonly topics: TopicsService,
     private readonly interview: InterviewService,
+    private readonly drafts: DraftsService,
   ) {}
 
   @Post()
@@ -36,5 +38,15 @@ export class TopicsController {
   @Post(':id/skip-interview')
   skipInterview(@Req() req: AuthedRequest, @Param('id', ParseUUIDPipe) id: string) {
     return this.interview.skipForTopic(id, req.user.id);
+  }
+
+  @Post(':id/draft/generate')
+  generateDraft(@Req() req: AuthedRequest, @Param('id', ParseUUIDPipe) id: string) {
+    return this.drafts.generate(id, req.user.id);
+  }
+
+  @Get(':id/draft')
+  draft(@Req() req: AuthedRequest, @Param('id', ParseUUIDPipe) id: string) {
+    return this.drafts.getForTopic(id, req.user.id);
   }
 }
