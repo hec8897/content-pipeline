@@ -35,6 +35,7 @@ const PRESETS: { bg: string; fg: string }[] = [
 
 type Props = {
   initial: CardNewsCard[];
+  onChange?: (cards: CardNewsCard[]) => void;
   onSave?: (cards: CardNewsCard[]) => void;
 };
 
@@ -133,7 +134,7 @@ function SortableCard({
   );
 }
 
-export function CardNewsEditor({ initial, onSave }: Props) {
+export function CardNewsEditor({ initial, onChange, onSave }: Props) {
   const [cards, setCards] = useState<CardNewsCard[]>(initial);
   const [selectedId, setSelectedId] = useState<string>(initial[0]?.id ?? '');
 
@@ -153,18 +154,21 @@ export function CardNewsEditor({ initial, onSave }: Props) {
   );
   const selectedIdx = cards.findIndex((c) => c.id === selected?.id);
 
+  const applyCards = (next: CardNewsCard[]) => {
+    setCards(next);
+    onChange?.(next);
+  };
+
   const updateSelected = (patch: Partial<CardNewsCard>) => {
-    setCards((prev) => prev.map((c) => (c.id === selected.id ? { ...c, ...patch } : c)));
+    applyCards(cards.map((c) => (c.id === selected.id ? { ...c, ...patch } : c)));
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
-    setCards((prev) => {
-      const oldIndex = prev.findIndex((c) => c.id === active.id);
-      const newIndex = prev.findIndex((c) => c.id === over.id);
-      return arrayMove(prev, oldIndex, newIndex);
-    });
+    const oldIndex = cards.findIndex((c) => c.id === active.id);
+    const newIndex = cards.findIndex((c) => c.id === over.id);
+    applyCards(arrayMove(cards, oldIndex, newIndex));
   };
 
   const addCard = () => {
@@ -178,13 +182,13 @@ export function CardNewsEditor({ initial, onSave }: Props) {
       bg: '#222',
       fg: 'white',
     };
-    setCards([...cards, next]);
+    applyCards([...cards, next]);
     setSelectedId(id);
   };
 
   const deleteSelected = () => {
     if (cards.length <= 2) return;
-    setCards((prev) => prev.filter((c) => c.id !== selected.id));
+    applyCards(cards.filter((c) => c.id !== selected.id));
     setSelectedId(cards[0]?.id ?? '');
   };
 
