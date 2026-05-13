@@ -77,6 +77,7 @@ export interface Draft {
   card_news: CardNewsCardData[] | null;
   blog_title: string | null;
   blog_body: string | null;
+  blog_tags: string[];
   error_reason: string | null;
   model_used: string | null;
   generated_at: string | null;
@@ -93,4 +94,5 @@ export interface PatchDraftPayload {
   card_news?: CardNewsCardData[];
   blog_title?: string;
   blog_body?: string;
+  blog_tags?: string[];
 }
