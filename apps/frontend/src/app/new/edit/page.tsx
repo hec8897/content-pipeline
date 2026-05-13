@@ -13,11 +13,7 @@ import { ApiError } from '@/lib/api/client';
 import { draftsApi } from '@/lib/api/drafts';
 import { qk } from '@/lib/api/queryKeys';
 import { routes } from '@/lib/routes';
-import type {
-  CardNewsCardData,
-  Draft,
-  DraftWithTopic,
-} from '@/lib/api/types';
+import type { CardNewsCardData, Draft, DraftWithTopic } from '@/lib/api/types';
 import type { CardNewsCard } from '@/types';
 
 const TABS = [
@@ -57,6 +53,13 @@ export default function NewEditPage() {
     enabled: !!topicId,
   });
 
+  // draft 가 없는 케이스(직접 URL 진입) — 양산 페이지로. render 중 router.replace 호출은
+  // React 안티패턴(다른 컴포넌트의 state 업데이트)이라 effect 로 분리.
+  const draftMissing = query.data?.draft === null;
+  useEffect(() => {
+    if (draftMissing) router.replace(routes.newGenerate);
+  }, [draftMissing, router]);
+
   if (!topicId) return null;
 
   if (query.isLoading) {
@@ -69,17 +72,14 @@ export default function NewEditPage() {
 
   if (query.isError) {
     const message =
-      query.error instanceof ApiError
-        ? query.error.message
-        : '양산 결과를 불러오지 못했어요';
+      query.error instanceof ApiError ? query.error.message : '양산 결과를 불러오지 못했어요';
     return <ErrorPanel message={message} />;
   }
 
   const data = query.data as DraftWithTopic;
 
   if (!data.draft) {
-    // 직접 URL 진입 — 양산 먼저 시키기
-    router.replace(routes.newGenerate);
+    // 위 useEffect 가 다음 tick 에 router.replace 처리. 그 사이 빈 화면.
     return null;
   }
 
@@ -203,9 +203,7 @@ function DraftEditor({ draft, topicId }: { draft: Draft; topicId: string }) {
         })}
 
         <div className="ml-auto flex items-center gap-2">
-          {error ? (
-            <span className="text-[11.5px] text-red-500">{error}</span>
-          ) : null}
+          {error ? <span className="text-[11.5px] text-red-500">{error}</span> : null}
           {dirty ? (
             <button
               type="button"
@@ -213,9 +211,7 @@ function DraftEditor({ draft, topicId }: { draft: Draft; topicId: string }) {
               disabled={mutation.isPending}
               className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-[12.5px] text-text border border-border hover:bg-surface-2 disabled:opacity-50"
             >
-              {mutation.isPending ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : null}
+              {mutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
               변경 사항 저장
             </button>
           ) : null}
