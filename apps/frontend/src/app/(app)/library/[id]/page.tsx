@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ChevronLeft, MoreHorizontal, Pencil } from 'lucide-react';
+import { ChevronLeft, MoreHorizontal } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { DetailHero } from '@/features/detail/components/DetailHero';
 import { DetailTabs } from '@/features/detail/components/DetailTabs';
@@ -17,8 +17,6 @@ export default async function ContentDetailPage(props: PageProps<'/library/[id]'
   const content = LIBRARY_ITEMS.find((c) => c.id === id);
   if (!content) notFound();
 
-  const editLabel = content.state === 'draft' ? '이어서 편집' : '편집';
-
   return (
     <>
       <PageHeader
@@ -29,25 +27,17 @@ export default async function ContentDetailPage(props: PageProps<'/library/[id]'
         }
         title={content.title}
         actions={
-          <>
-            <Button variant="ghost">
-              <MoreHorizontal className="w-3.5 h-3.5" /> 더보기
-            </Button>
-            <Link
-              href={routes.libraryItemEdit(content.id)}
-              className="inline-flex items-center gap-1.5 bg-text text-white rounded-md px-3.5 py-2 text-[12.5px] font-semibold hover:bg-black"
-            >
-              <Pencil className="w-3.5 h-3.5" /> {editLabel}
-            </Link>
-          </>
+          <Button variant="ghost">
+            <MoreHorizontal className="w-3.5 h-3.5" /> 더보기
+          </Button>
         }
       />
       <DetailHero content={content} />
       <DetailTabs
         panels={{
           overview: <DetailOverview content={content} />,
-          insta: <DetailInsta />,
-          blog: <DetailBlog />,
+          insta: <DetailInsta contentId={content.id} />,
+          blog: <DetailBlog contentId={content.id} />,
           activity: <DetailActivity />,
         }}
       />

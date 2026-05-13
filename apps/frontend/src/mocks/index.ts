@@ -277,6 +277,8 @@ export const ACTIVITY_LOG: ActivityEvent[] = [
 
 export const NAVER_BLOG_TITLE = '5살 푸들 입양한 지 한 달, 1인 가구가 알게 된 7가지';
 
+export const NAVER_BLOG_TAGS = ['성견입양', '1인가구', '푸들', '반려견일상', '입양후기'];
+
 export const NAVER_BLOG_BODY = `안녕하세요, 민지입니다.
 
 한 달 전, 5살 푸들을 입양했습니다. 어린 강아지가 아닌 성견을 입양한다는 게 처음에는 정말 망설여졌어요. 분리불안 이슈가 있다는 이야기, 새 보호자에게 적응하는 데 시간이 오래 걸린다는 이야기… 정보를 찾을수록 더 불안해졌습니다.

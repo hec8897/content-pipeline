@@ -146,6 +146,7 @@ function DraftEditor({ draft, topicId }: { draft: Draft; topicId: string }) {
   const [cards, setCards] = useState<CardNewsCard[]>(initialCards);
   const [blogTitle, setBlogTitle] = useState(draft.blog_title ?? '');
   const [blogBody, setBlogBody] = useState(draft.blog_body ?? '');
+  const [blogTags, setBlogTags] = useState<string[]>([]);
   const [dirty, setDirty] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -180,6 +181,11 @@ function DraftEditor({ draft, topicId }: { draft: Draft; topicId: string }) {
 
   const onBlogBodyChange = (next: string) => {
     setBlogBody(next);
+    setDirty(true);
+  };
+
+  const onBlogTagsChange = (next: string[]) => {
+    setBlogTags(next);
     setDirty(true);
   };
 
@@ -230,8 +236,10 @@ function DraftEditor({ draft, topicId }: { draft: Draft; topicId: string }) {
         <BlogEditor
           title={blogTitle}
           body={blogBody}
+          tags={blogTags}
           onTitleChange={onBlogTitleChange}
           onBodyChange={onBlogBodyChange}
+          onTagsChange={onBlogTagsChange}
         />
       )}
     </div>
