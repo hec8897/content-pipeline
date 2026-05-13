@@ -52,3 +52,45 @@ export type AnswerResult =
       userMessage: InterviewMessage;
       session: InterviewSession;
     };
+
+export type DraftStatus = 'pending' | 'generating' | 'ready' | 'failed';
+
+// 백엔드 zod 스키마(`CardNewsCard`) 와 모양 일치. `id` 는 frontend 측 sortable 용으로
+// /new/edit 에서 별도 부여 — DB/API 레이어에는 보존하지 않음.
+export interface CardNewsCardData {
+  type: 'cover' | 'body' | 'outro';
+  title: string;
+  subtitle?: string;
+  body?: string;
+  num?: string;
+  tag?: string;
+  cta?: string;
+  bg: string;
+  fg: string;
+}
+
+export interface Draft {
+  id: string;
+  topic_id: string;
+  user_id: string;
+  status: DraftStatus;
+  card_news: CardNewsCardData[] | null;
+  blog_title: string | null;
+  blog_body: string | null;
+  error_reason: string | null;
+  model_used: string | null;
+  generated_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DraftWithTopic {
+  topic: Topic;
+  draft: Draft | null;
+}
+
+export interface PatchDraftPayload {
+  card_news?: CardNewsCardData[];
+  blog_title?: string;
+  blog_body?: string;
+}
