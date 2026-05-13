@@ -70,7 +70,7 @@ export class DraftsService {
 
       const blogResult = await this.gemini.generateValidated(
         buildBlogPrompt(topic.title, history),
-        (raw) => {
+        (raw): ReturnType<typeof parseBlogMarkdown> => {
           const parsed = parseBlogMarkdown(raw);
           if (parsed.body.length < 200) {
             throw new Error('blog body too short');
@@ -85,6 +85,7 @@ export class DraftsService {
         cardResult.value,
         finalTitle,
         blogResult.value.body,
+        blogResult.value.tags,
         `card=${cardResult.modelUsed},blog=${blogResult.modelUsed}`,
       );
     } catch (err) {
@@ -113,6 +114,7 @@ export class DraftsService {
     }
     if (validated.blog_title !== undefined) update.blog_title = validated.blog_title;
     if (validated.blog_body !== undefined) update.blog_body = validated.blog_body;
+    if (validated.blog_tags !== undefined) update.blog_tags = validated.blog_tags;
 
     const { data, error } = await this.supabase.admin
       .from('drafts')
@@ -195,6 +197,7 @@ export class DraftsService {
           card_news: null,
           blog_title: null,
           blog_body: null,
+          blog_tags: [],
           error_reason: null,
           model_used: null,
           generated_at: null,
@@ -223,6 +226,7 @@ export class DraftsService {
     cardNews: CardNews,
     blogTitle: string,
     blogBody: string,
+    blogTags: string[],
     modelUsed: string,
   ): Promise<DraftRow> {
     const { data, error } = await this.supabase.admin
@@ -232,6 +236,7 @@ export class DraftsService {
         card_news: cardNews,
         blog_title: blogTitle,
         blog_body: blogBody,
+        blog_tags: blogTags,
         model_used: modelUsed,
         generated_at: new Date().toISOString(),
         error_reason: null,

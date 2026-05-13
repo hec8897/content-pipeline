@@ -15,6 +15,7 @@ export type Database = {
       drafts: {
         Row: {
           blog_body: string | null;
+          blog_tags: string[];
           blog_title: string | null;
           card_news: Json | null;
           created_at: string;
@@ -29,6 +30,7 @@ export type Database = {
         };
         Insert: {
           blog_body?: string | null;
+          blog_tags?: string[];
           blog_title?: string | null;
           card_news?: Json | null;
           created_at?: string;
@@ -43,6 +45,7 @@ export type Database = {
         };
         Update: {
           blog_body?: string | null;
+          blog_tags?: string[];
           blog_title?: string | null;
           card_news?: Json | null;
           created_at?: string;

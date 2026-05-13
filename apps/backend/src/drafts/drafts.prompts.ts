@@ -103,14 +103,14 @@ export function buildBlogPrompt(
 출력 형식:
 - 첫 줄: "# <글 제목>" (반드시 "# " 로 시작)
 - 본문: 1200~1800자. ## 소제목 2~4개로 자연스럽게 구획.
-- 마지막 줄: "#태그1 #태그2 #태그3" (3~5개 한국어 해시태그, 띄어쓰기 X — 네이버 검색 노출 의도)
+- 본문 다음 한 줄 비우고 마지막 줄: "TAGS: 태그1, 태그2, 태그3" (3~5개 한국어 태그, 콤마 구분, 단어 앞에 # 붙이지 마, 태그 안에 띄어쓰기 X — 네이버 검색 노출 의도)
 
 작성 규칙:
 - 첫 줄의 "# " 외에 인사·자기소개·메타 발언 없이 본문으로 진입해도 좋고, 자연스러운 도입은 OK. 단 진부한 "안녕하세요 여러분" 류는 피해.
 - 코드 펜스, 과한 인용(>) 없이 평문 문단 중심.
 - transcript 의 디테일을 그대로 인용하거나 살짝 다듬어 본문에 녹여.
 
-마크다운만 출력. JSON, 설명 일체 금지.`,
+마크다운만 출력. JSON, 설명, 본문 안에 별도 "TAGS:" 줄 (마지막 1줄 외) 일체 금지.`,
           },
         ],
       },
@@ -118,16 +118,47 @@ export function buildBlogPrompt(
   };
 }
 
-export function parseBlogMarkdown(raw: string): { title: string; body: string } {
+export function parseBlogMarkdown(raw: string): {
+  title: string;
+  body: string;
+  tags: string[];
+} {
   const text = raw.trim();
-  const newlineIdx = text.indexOf('\n');
-  const firstLine = newlineIdx === -1 ? text : text.slice(0, newlineIdx);
-  const rest = newlineIdx === -1 ? '' : text.slice(newlineIdx + 1).trimStart();
+  const lines = text.split('\n');
 
-  const match = firstLine.match(/^#\s+(.+)$/);
-  if (!match) {
-    // 첫 줄이 # 헤딩 아니면 title 비움 → service 가 topic.title 로 폴백
-    return { title: '', body: text };
+  // 마지막 비공백 줄에서 "TAGS:" prefix 분리 (대소문자 무시).
+  let tags: string[] = [];
+  let bodyEnd = lines.length;
+  for (let i = lines.length - 1; i >= 0; i--) {
+    const line = lines[i].trim();
+    if (line === '') continue;
+    const tagMatch = line.match(/^tags\s*:\s*(.+)$/i);
+    if (tagMatch) {
+      tags = tagMatch[1]
+        .split(',')
+        .map((t) => t.trim().replace(/^#+/, '').replace(/\s+/g, ''))
+        .filter((t) => t.length > 0);
+      bodyEnd = i;
+    }
+    break;
   }
-  return { title: match[1].trim(), body: rest };
+
+  // body 끝쪽 공백 줄 제거.
+  const bodyLines = lines.slice(0, bodyEnd);
+  while (bodyLines.length > 0 && bodyLines[bodyLines.length - 1].trim() === '') {
+    bodyLines.pop();
+  }
+  const trimmedBody = bodyLines.join('\n');
+
+  // 첫 줄이 "# 제목" 패턴인지 확인.
+  const newlineIdx = trimmedBody.indexOf('\n');
+  const firstLine = newlineIdx === -1 ? trimmedBody : trimmedBody.slice(0, newlineIdx);
+  const rest = newlineIdx === -1 ? '' : trimmedBody.slice(newlineIdx + 1).trimStart();
+
+  const titleMatch = firstLine.match(/^#\s+(.+)$/);
+  if (!titleMatch) {
+    // 첫 줄이 # 헤딩 아니면 title 비움 → service 가 topic.title 로 폴백
+    return { title: '', body: trimmedBody, tags };
+  }
+  return { title: titleMatch[1].trim(), body: rest, tags };
 }
