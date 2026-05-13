@@ -12,6 +12,59 @@ export type Database = {
   };
   public: {
     Tables: {
+      drafts: {
+        Row: {
+          blog_body: string | null;
+          blog_title: string | null;
+          card_news: Json | null;
+          created_at: string;
+          error_reason: string | null;
+          generated_at: string | null;
+          id: string;
+          model_used: string | null;
+          status: string;
+          topic_id: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          blog_body?: string | null;
+          blog_title?: string | null;
+          card_news?: Json | null;
+          created_at?: string;
+          error_reason?: string | null;
+          generated_at?: string | null;
+          id?: string;
+          model_used?: string | null;
+          status?: string;
+          topic_id: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          blog_body?: string | null;
+          blog_title?: string | null;
+          card_news?: Json | null;
+          created_at?: string;
+          error_reason?: string | null;
+          generated_at?: string | null;
+          id?: string;
+          model_used?: string | null;
+          status?: string;
+          topic_id?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'drafts_topic_id_fkey';
+            columns: ['topic_id'];
+            isOneToOne: false;
+            referencedRelation: 'topics';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       interview_messages: {
         Row: {
           content: string;

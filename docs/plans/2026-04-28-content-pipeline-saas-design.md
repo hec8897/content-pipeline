@@ -416,7 +416,8 @@ n8n에 들어오는 트래픽은 두 종류:
 | Phase | Plan                                                                | 상태                              |
 | ----- | ------------------------------------------------------------------- | --------------------------------- |
 | 1a    | [Phase 1a — 인증 기반](./2026-05-09-content-pipeline-phase-1a.md)   | 완료 (#1)                         |
-| 2     | [Phase 2 — AI 인터뷰](./2026-05-10-content-pipeline-phase-2.md)     | backend 완료 (#3), frontend 진행 중 |
+| 2     | [Phase 2 — AI 인터뷰](./2026-05-10-content-pipeline-phase-2.md)     | 완료 (#3, #4)                     |
+| 3     | [Phase 3 — AI 양산](./2026-05-12-content-pipeline-phase-3.md)       | 완료 (#5)                         |
 
 > 직전 Phase 완료 후 다음 plan을 순차 작성. Phase 1a가 굳혀야 Phase 2 위에 얹을 토대가 명확해짐.
 >
@@ -464,6 +465,7 @@ n8n에 들어오는 트래픽은 두 종류:
 - **2026-05-10**: Phase 2 plan 확정. 도메인 = `topics` / `interview_sessions` / `interview_messages` 3 테이블 + RLS. `(topic_id) where status='active'` partial unique 로 active session 단일성, `(session_id, turn, role)` unique 로 같은 turn = assistant Q + user A 한 쌍 강제. backend 는 admin(service-role) 로 RLS 우회 + controller 단 ownership 직접 확인 (`NotFound` vs `Forbidden` 분리). AI 인터뷰 상태머신 = MIN(3) ≤ N < MAX(8) 구간만 enough judge LLM 호출 (비용 최적화), MAX 도달 시 judge 없이 `max_reached` 강제 종료. Gemini 호출은 인터뷰어 / judge 별도 — 페르소나 `systemInstruction` (자연어 질문) vs YES/NO 강제 출력으로 역할 분리
 - **2026-05-11**: 프론트엔드 API 레이어 도구 = **axios + TanStack Query** 채택. axios instance 의 request interceptor 가 `createBrowserSupabaseClient()` 싱글톤에서 직접 token 조회 → 페이지/훅에서 `supabase` 인자 전파 제거. TanStack Query 는 Phase 3 의 refresh hydrate / 목록 캐싱 / mutation invalidation 자리 선점 (본 Phase 는 mutation-only 라 `useMutation` 마이그레이션은 Phase 3 와 함께 일괄). 후보 — 모듈 레벨 `setAccessTokenGetter` 패턴은 SupabaseProvider mount 순서 의존 race 우려로 폐기, fetch 직접 사용은 인터셉터 확장성 부족으로 폐기
 - **2026-05-11**: Supabase API 키 = **publishable / secret 시스템 (`sb_publishable_*` / `sb_secret_*`)** 채택. legacy anon/service_role JWT 키가 신규 프로젝트에서 signature reject 되는 케이스 → 새 시스템으로 전환. 코드 변경 없이 env 값만 교체 (변수 이름은 기존 `SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY` 유지 — 향후 별도 리네임 PR 후보)
+- **2026-05-12**: Phase 3 plan 확정. 양산 = sync 단일 POST + Gemini 2회 호출(카드 JSON / 블로그 마크다운), `drafts` 1 topic : 1 row(regenerate replaces). 카드 HTML→Image 렌더는 Phase 7(인스타 발행) 로 이관 — `/new/edit` 가 JSON 으로 직접 렌더, 이미지 자산은 발행 시점에만 필요. 색상 팔레트 7쌍 화이트리스트로 LLM 출력 컨트롤. zod ^4.4.3 backend dep 추가 (LLM JSON 검증 + class-validator deep tuple 약점 보완).
 
 ---
 

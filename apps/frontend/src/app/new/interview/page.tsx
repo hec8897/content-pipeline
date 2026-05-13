@@ -28,8 +28,19 @@ export default function NewInterviewPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!topicId || !session || session.status !== 'active') {
+    if (!topicId || !session) {
       router.replace(routes.newContent);
+      return;
+    }
+    // stop() / answer(done) 직후 setSession 으로 status 가 바뀌면 여기서 적절한 다음 단계로.
+    // (전엔 무조건 /new 로 보내서 router.push(newReview) 와 race 가 발생함)
+    if (session.status === 'completed') {
+      router.replace(routes.newReview);
+      return;
+    }
+    if (session.status === 'skipped') {
+      router.replace(routes.newGenerate);
+      return;
     }
   }, [topicId, session, router]);
 
@@ -78,8 +89,8 @@ export default function NewInterviewPage() {
           : [...without, res.userMessage];
       });
       if (res.kind === 'done') {
+        // setSession 후 useEffect 가 status='completed' 보고 newReview 로 이동
         setSession(res.session);
-        router.push(routes.newReview);
       }
     } catch (err) {
       setMessages((prev) => prev.filter((m) => m.id !== tempId));
@@ -96,8 +107,8 @@ export default function NewInterviewPage() {
     setPending(true);
     try {
       const completed = await interviewApi.stop(session.id);
+      // useEffect 가 status='completed' 보고 newReview 로 이동
       setSession(completed);
-      router.push(routes.newReview);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : '인터뷰 종료에 실패했습니다');
       setPending(false);

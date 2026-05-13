@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
+import { DraftsModule } from '@/drafts/drafts.module';
 import { GeminiModule } from '@/gemini/gemini.module';
 import { HealthModule } from '@/health/health.module';
 import { InterviewModule } from '@/interview/interview.module';
@@ -20,6 +21,7 @@ import { AppService } from './app.service';
     GeminiModule,
     InterviewModule,
     TopicsModule,
+    DraftsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

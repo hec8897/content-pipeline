@@ -20,6 +20,15 @@ export class GeminiService {
   }
 
   async generateText(request: GenerateContentRequest): Promise<string> {
+    const { value } = await this.generateValidated(request, (raw) => raw);
+    return value;
+  }
+
+  // parse 실패도 모델 폴백 트리거 — JSON/zod 검증을 폴백 루프 안으로 끌어들임.
+  async generateValidated<T>(
+    request: GenerateContentRequest,
+    parse: (raw: string) => T,
+  ): Promise<{ value: T; modelUsed: string }> {
     let lastError: unknown;
     for (const modelName of MODEL_FALLBACKS) {
       try {
@@ -27,7 +36,8 @@ export class GeminiService {
         const result = await model.generateContent(request);
         const text = result.response.text().trim();
         if (!text) throw new Error(`empty response from ${modelName}`);
-        return text;
+        const value = parse(text);
+        return { value, modelUsed: modelName };
       } catch (err) {
         lastError = err;
         this.logger.warn(`gemini ${modelName} failed: ${(err as Error).message}`);

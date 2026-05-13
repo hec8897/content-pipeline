@@ -6,4 +6,5 @@ export const qk = {
   topics: () => ['topics'] as const,
   topic: (id: string) => ['topics', id] as const,
   interviewSession: (sessionId: string) => ['interview', sessionId] as const,
+  draft: (topicId: string) => ['draft', topicId] as const,
 };
