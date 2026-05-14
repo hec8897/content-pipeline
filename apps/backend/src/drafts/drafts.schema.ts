@@ -74,11 +74,17 @@ export const patchDraftSchema = z
     card_news: cardNewsSchema.optional(),
     blog_title: z.string().min(1).max(200).optional(),
     blog_body: z.string().min(1).max(10_000).optional(),
+    blog_tags: z.array(z.string().min(1).max(40)).max(10).optional(),
   })
   .refine(
     (val) =>
-      val.card_news !== undefined || val.blog_title !== undefined || val.blog_body !== undefined,
-    { message: 'At least one of card_news / blog_title / blog_body must be provided' },
+      val.card_news !== undefined ||
+      val.blog_title !== undefined ||
+      val.blog_body !== undefined ||
+      val.blog_tags !== undefined,
+    {
+      message: 'At least one of card_news / blog_title / blog_body / blog_tags must be provided',
+    },
   );
 
 export type PatchDraftPayload = z.infer<typeof patchDraftSchema>;

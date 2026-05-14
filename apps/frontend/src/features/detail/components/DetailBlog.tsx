@@ -1,5 +1,7 @@
-import { Eye, Heart, MessageSquare } from 'lucide-react';
+import Link from 'next/link';
+import { Eye, Heart, MessageSquare, Pencil } from 'lucide-react';
 import { NAVER_BLOG_BODY, NAVER_BLOG_TITLE } from '@/mocks';
+import { routes } from '@/lib/routes';
 
 function renderMarkdown(md: string) {
   const lines = md.split('\n');
@@ -68,9 +70,20 @@ function renderMarkdown(md: string) {
   return out;
 }
 
-export function DetailBlog() {
+type Props = { contentId: string };
+
+export function DetailBlog({ contentId }: Props) {
   return (
-    <div className="px-7 py-6">
+    <div className="px-7 py-6 flex flex-col gap-4">
+      <div className="max-w-[720px] mx-auto w-full flex items-center justify-between gap-3">
+        <span className="text-[12px] text-text-3">네이버 블로그 미리보기</span>
+        <Link
+          href={routes.libraryItemEdit(contentId, 'blog')}
+          className="inline-flex items-center gap-1.5 bg-text text-white rounded-md px-3 py-2 text-[12.5px] font-semibold hover:bg-black"
+        >
+          <Pencil className="w-3.5 h-3.5" /> 블로그 편집
+        </Link>
+      </div>
       <article className="max-w-[720px] mx-auto bg-surface border border-border rounded-[10px] overflow-hidden">
         <header className="bg-naver text-white px-5 py-3 flex items-center gap-2 text-[12.5px] font-semibold">
           <span>NAVER 블로그</span>

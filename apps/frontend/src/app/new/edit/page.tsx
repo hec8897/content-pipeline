@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -8,6 +8,10 @@ import { ArrowRight, Loader2, RotateCw } from 'lucide-react';
 
 import { useNewContent } from '@/features/new-content/context';
 import { BlogEditor } from '@/features/new-content/components/BlogEditor';
+import {
+  AutosaveIndicator,
+  type AutosaveStatus,
+} from '@/features/new-content/components/AutosaveIndicator';
 import { CardNewsEditor } from '@/features/detail/components/CardNewsEditor';
 import { ApiError } from '@/lib/api/client';
 import { draftsApi } from '@/lib/api/drafts';
@@ -23,6 +27,8 @@ const TABS = [
 
 type TabKey = (typeof TABS)[number]['key'];
 
+const AUTOSAVE_DEBOUNCE_MS = 800;
+
 // 백엔드는 카드 식별자가 위치(인덱스/num) — frontend dnd 용 id 를 부여한다.
 function toEditorCards(cards: CardNewsCardData[]): CardNewsCard[] {
   return cards.map((c, i) => ({
@@ -37,6 +43,16 @@ function fromEditorCards(cards: CardNewsCard[]): CardNewsCardData[] {
     void id;
     return rest;
   });
+}
+
+function formatSavedAgo(savedAt: number, now: number): string {
+  const diffSec = Math.max(0, Math.floor((now - savedAt) / 1000));
+  if (diffSec < 10) return '방금';
+  if (diffSec < 60) return `${diffSec}초 전`;
+  const min = Math.floor(diffSec / 60);
+  if (min < 60) return `${min}분 전`;
+  const hour = Math.floor(min / 60);
+  return `${hour}시간 전`;
 }
 
 export default function NewEditPage() {
@@ -134,6 +150,7 @@ function ErrorPanel({
 }
 
 function DraftEditor({ draft, topicId }: { draft: Draft; topicId: string }) {
+  const router = useRouter();
   const qc = useQueryClient();
   const [tab, setTab] = useState<TabKey>('insta');
 
@@ -146,8 +163,24 @@ function DraftEditor({ draft, topicId }: { draft: Draft; topicId: string }) {
   const [cards, setCards] = useState<CardNewsCard[]>(initialCards);
   const [blogTitle, setBlogTitle] = useState(draft.blog_title ?? '');
   const [blogBody, setBlogBody] = useState(draft.blog_body ?? '');
+  const [blogTags, setBlogTags] = useState<string[]>(draft.blog_tags);
   const [dirty, setDirty] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+
+  // Autosave 표시 상태. 양산 직후라 첫 표시는 'saved' / generated_at 기준.
+  const [autosaveStatus, setAutosaveStatus] = useState<AutosaveStatus>('saved');
+  const [lastSavedAt, setLastSavedAt] = useState<number>(() =>
+    draft.generated_at ? new Date(draft.generated_at).getTime() : Date.now(),
+  );
+  // 매 초 갱신 — `방금 → X초 전 → X분 전` 자연 진행.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  const savedAgo = formatSavedAgo(lastSavedAt, now);
+
+  // mutation in-flight 중 새 변경이 들어오면 onSuccess 후 한 번 더 발사.
+  const pendingChangeRef = useRef(false);
 
   const mutation = useMutation({
     mutationFn: () =>
@@ -155,32 +188,87 @@ function DraftEditor({ draft, topicId }: { draft: Draft; topicId: string }) {
         card_news: fromEditorCards(cards),
         blog_title: blogTitle,
         blog_body: blogBody,
+        blog_tags: blogTags,
       }),
+    onMutate: () => {
+      setAutosaveStatus('saving');
+    },
     onSuccess: (updated) => {
       qc.setQueryData<DraftWithTopic>(qk.draft(topicId), (prev) =>
         prev ? { ...prev, draft: updated } : prev,
       );
       setDirty(false);
-      setError(null);
+      setLastSavedAt(Date.now());
+      setAutosaveStatus('saved');
+      if (pendingChangeRef.current) {
+        pendingChangeRef.current = false;
+        // 다음 tick 에 dirty 가 다시 true 가 되도록 — useEffect 가 다음 debounce 사이클 시작
+        setDirty(true);
+      }
     },
-    onError: (err) => {
-      setError(err instanceof ApiError ? err.message : '저장에 실패했어요');
+    onError: () => {
+      setAutosaveStatus('failed');
+      // dirty 유지 — 재시도 클릭 또는 다음 변경 시 자동 재발사.
     },
   });
+  const { mutate, isPending } = mutation;
+
+  // 변경 감지 → 800ms idle 후 PATCH.
+  useEffect(() => {
+    if (!dirty) return;
+    const t = setTimeout(() => {
+      if (isPending) {
+        pendingChangeRef.current = true;
+      } else {
+        mutate();
+      }
+    }, AUTOSAVE_DEBOUNCE_MS);
+    return () => clearTimeout(t);
+  }, [dirty, blogTitle, blogBody, blogTags, cards, isPending, mutate]);
+
+  // 페이지 이탈 가드 — 브라우저 표준 confirm.
+  useEffect(() => {
+    if (!dirty && !isPending) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [dirty, isPending]);
 
   const onCardsChange = (next: CardNewsCard[]) => {
     setCards(next);
     setDirty(true);
   };
-
   const onBlogTitleChange = (next: string) => {
     setBlogTitle(next);
     setDirty(true);
   };
-
   const onBlogBodyChange = (next: string) => {
     setBlogBody(next);
     setDirty(true);
+  };
+  const onBlogTagsChange = (next: string[]) => {
+    setBlogTags(next);
+    setDirty(true);
+  };
+
+  const onRetrySave = () => {
+    if (isPending) return;
+    mutate();
+  };
+
+  const onPublishClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (!dirty && !isPending) return;
+    const ok = window.confirm('저장 중인 변경 사항이 있어요. 그대로 이동할까요?');
+    if (!ok) {
+      e.preventDefault();
+      return;
+    }
+    // 사용자가 OK — 이탈 진행. 단, dirty 가 있어도 unsaved 가 됨(서버 미반영).
+    router.push(routes.newPublish);
+    e.preventDefault();
   };
 
   return (
@@ -202,21 +290,15 @@ function DraftEditor({ draft, topicId }: { draft: Draft; topicId: string }) {
           );
         })}
 
-        <div className="ml-auto flex items-center gap-2">
-          {error ? <span className="text-[11.5px] text-red-500">{error}</span> : null}
-          {dirty ? (
-            <button
-              type="button"
-              onClick={() => mutation.mutate()}
-              disabled={mutation.isPending}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-[12.5px] text-text border border-border hover:bg-surface-2 disabled:opacity-50"
-            >
-              {mutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
-              변경 사항 저장
-            </button>
-          ) : null}
+        <div className="ml-auto flex items-center gap-3">
+          <AutosaveIndicator
+            status={autosaveStatus}
+            savedAgo={savedAgo}
+            onRetry={onRetrySave}
+          />
           <Link
             href={routes.newPublish}
+            onClick={onPublishClick}
             className="inline-flex items-center gap-1.5 bg-text text-white rounded-md px-3.5 py-2 text-[12.5px] font-semibold hover:bg-black"
           >
             다음 — 발행 <ArrowRight className="w-3.5 h-3.5" />
@@ -230,8 +312,10 @@ function DraftEditor({ draft, topicId }: { draft: Draft; topicId: string }) {
         <BlogEditor
           title={blogTitle}
           body={blogBody}
+          tags={blogTags}
           onTitleChange={onBlogTitleChange}
           onBodyChange={onBlogBodyChange}
+          onTagsChange={onBlogTagsChange}
         />
       )}
     </div>

@@ -4,14 +4,32 @@ import { ChevronLeft } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { DetailHero } from '@/features/detail/components/DetailHero';
 import { CardNewsEditor } from '@/features/detail/components/CardNewsEditor';
+import { BlogEditPanel } from './BlogEditPanel';
 import { Button } from '@/components/ui/Button';
-import { CARD_NEWS, LIBRARY_ITEMS } from '@/mocks';
+import {
+  CARD_NEWS,
+  LIBRARY_ITEMS,
+  NAVER_BLOG_BODY,
+  NAVER_BLOG_TAGS,
+  NAVER_BLOG_TITLE,
+} from '@/mocks';
 import { routes } from '@/lib/routes';
+
+type EditMode = 'insta' | 'blog';
+
+function resolveMode(raw: string | string[] | undefined): EditMode {
+  return raw === 'blog' ? 'blog' : 'insta';
+}
 
 export default async function ContentEditPage(props: PageProps<'/library/[id]/edit'>) {
   const { id } = await props.params;
+  const search = (await props.searchParams) as { mode?: string | string[] };
+  const mode = resolveMode(search.mode);
+
   const content = LIBRARY_ITEMS.find((c) => c.id === id);
   if (!content) notFound();
+
+  const tabLabel = mode === 'blog' ? '네이버 블로그 편집' : '카드뉴스 편집';
 
   return (
     <>
@@ -41,12 +59,20 @@ export default async function ContentEditPage(props: PageProps<'/library/[id]/ed
       <div className="border-b border-border bg-surface px-7">
         <div className="flex items-center gap-5">
           <span className="relative py-3 text-[12.5px] text-text font-semibold">
-            카드뉴스 편집
+            {tabLabel}
             <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-text" />
           </span>
         </div>
       </div>
-      <CardNewsEditor initial={CARD_NEWS} />
+      {mode === 'blog' ? (
+        <BlogEditPanel
+          initialTitle={NAVER_BLOG_TITLE}
+          initialBody={NAVER_BLOG_BODY}
+          initialTags={NAVER_BLOG_TAGS}
+        />
+      ) : (
+        <CardNewsEditor initial={CARD_NEWS} />
+      )}
     </>
   );
 }

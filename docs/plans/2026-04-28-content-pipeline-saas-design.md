@@ -413,11 +413,20 @@ n8n에 들어오는 트래픽은 두 종류:
 
 ## 8. Plans
 
-| Phase | Plan                                                                | 상태                              |
-| ----- | ------------------------------------------------------------------- | --------------------------------- |
-| 1a    | [Phase 1a — 인증 기반](./2026-05-09-content-pipeline-phase-1a.md)   | 완료 (#1)                         |
-| 2     | [Phase 2 — AI 인터뷰](./2026-05-10-content-pipeline-phase-2.md)     | 완료 (#3, #4)                     |
-| 3     | [Phase 3 — AI 양산](./2026-05-12-content-pipeline-phase-3.md)       | 완료 (#5)                         |
+| Phase | Plan                                                                         | 상태                              |
+| ----- | ---------------------------------------------------------------------------- | --------------------------------- |
+| 1a    | [Phase 1a — 인증 기반](./2026-05-09-content-pipeline-phase-1a.md)            | 완료 (#1)                         |
+| 2     | [Phase 2 — AI 인터뷰](./2026-05-10-content-pipeline-phase-2.md)              | 완료 (#3, #4)                     |
+| 3     | [Phase 3 — AI 양산](./2026-05-12-content-pipeline-phase-3.md)                | 완료 (#5)                         |
+| 4     | [Phase 4 — 블로그 편집/미리보기](./2026-05-13-content-pipeline-phase-4.md)   | 진행 중 (frontend + backend 머지) |
+| 5     | _Phase 5 — 카드뉴스 편집/미리보기 (예정)_                                    | —                                 |
+| 1b    | _Phase 1b — 인프라 (ECS/n8n/Cloudflare, 발행 진입 직전)_                     | —                                 |
+| 6     | _Phase 6 — 발행 인프라 (큐/스케줄러/n8n webhook)_                            | —                                 |
+| 7     | _Phase 7 — 네이버 자동_                                                      | —                                 |
+| 8     | _Phase 8 — 인스타 자동_                                                      | —                                 |
+| 9     | _Phase 9 — 통합 + dogfooding_                                                | —                                 |
+
+> **2026-05-13 분배 재정렬**: 기존 Phase 4(편집+미리보기) 를 새 Phase 4(블로그) + 새 Phase 5(카드뉴스) 로 쪼개고, 기존 Phase 5~8(발행 단계) 은 각각 +1 씩 뒤로 (Phase 6~9). 인프라(Phase 1b) 는 발행 진입 직전 (새 Phase 5 와 새 Phase 6 사이).
 
 > 직전 Phase 완료 후 다음 plan을 순차 작성. Phase 1a가 굳혀야 Phase 2 위에 얹을 토대가 명확해짐.
 >
@@ -466,6 +475,8 @@ n8n에 들어오는 트래픽은 두 종류:
 - **2026-05-11**: 프론트엔드 API 레이어 도구 = **axios + TanStack Query** 채택. axios instance 의 request interceptor 가 `createBrowserSupabaseClient()` 싱글톤에서 직접 token 조회 → 페이지/훅에서 `supabase` 인자 전파 제거. TanStack Query 는 Phase 3 의 refresh hydrate / 목록 캐싱 / mutation invalidation 자리 선점 (본 Phase 는 mutation-only 라 `useMutation` 마이그레이션은 Phase 3 와 함께 일괄). 후보 — 모듈 레벨 `setAccessTokenGetter` 패턴은 SupabaseProvider mount 순서 의존 race 우려로 폐기, fetch 직접 사용은 인터셉터 확장성 부족으로 폐기
 - **2026-05-11**: Supabase API 키 = **publishable / secret 시스템 (`sb_publishable_*` / `sb_secret_*`)** 채택. legacy anon/service_role JWT 키가 신규 프로젝트에서 signature reject 되는 케이스 → 새 시스템으로 전환. 코드 변경 없이 env 값만 교체 (변수 이름은 기존 `SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY` 유지 — 향후 별도 리네임 PR 후보)
 - **2026-05-12**: Phase 3 plan 확정. 양산 = sync 단일 POST + Gemini 2회 호출(카드 JSON / 블로그 마크다운), `drafts` 1 topic : 1 row(regenerate replaces). 카드 HTML→Image 렌더는 Phase 7(인스타 발행) 로 이관 — `/new/edit` 가 JSON 으로 직접 렌더, 이미지 자산은 발행 시점에만 필요. 색상 팔레트 7쌍 화이트리스트로 LLM 출력 컨트롤. zod ^4.4.3 backend dep 추가 (LLM JSON 검증 + class-validator deep tuple 약점 보완).
+- **2026-05-13**: **Phase 분배 재정렬**. 기존 Phase 4(편집+미리보기) 를 둘로 쪼개 새 Phase 4 = 블로그 전용, 새 Phase 5 = 카드뉴스 전용 으로 분리. 기존 Phase 5~8(발행 인프라 / 네이버 / 인스타 / dogfooding) 은 각각 +1 씩 뒤로 (Phase 6~9). 사유 — 블로그/카드뉴스의 편집 UX 가 본질적으로 다르고 한 phase ~2일 가설을 지키려면 분리가 필요. 인프라(Phase 1b) 위치는 그대로 — 새 Phase 5 와 새 Phase 6 사이.
+- **2026-05-13**: Phase 4 plan 확정. 블로그 태그 데이터 모델 = DB 컬럼 분리(`drafts.blog_tags text[]`) + prompt 출력 형식 `TAGS:` prefix 별도 줄로 변경 (Phase 3 의 `#태그` 마지막 줄 규약 폐기) — 마크다운 헤딩 충돌 회피. 편집 UX = split layout(좌 raw 마크다운 textarea / 우 react-markdown 실시간 프리뷰, 50:50, 스크롤 동기화 X) + chip 태그 + CharGuide(1200~1800자 가이드) + Autosave(debounce 800ms, AutosaveIndicator saved/saving/failed 3상태, beforeunload + 라우팅 가드). Pretendard 단일 한국어 sans 도입(JetBrains Mono / Source Serif 4 미도입, 본문 textarea 만 시스템 monospace fallback). 인프라 의존 작업은 모두 발행 phase 로 이관 (네이버 채널 미리보기 mockup 등).
 
 ---
 
