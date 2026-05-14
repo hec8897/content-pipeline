@@ -1,4 +1,4 @@
-import { Body, Controller, Param, ParseUUIDPipe, Patch, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Req, UseGuards } from '@nestjs/common';
 import type { Request } from 'express';
 import type { User } from '@supabase/supabase-js';
 
@@ -13,6 +13,11 @@ type AuthedRequest = Request & { user: User };
 @UseGuards(SupabaseAuthGuard)
 export class DraftsController {
   constructor(private readonly drafts: DraftsService) {}
+
+  @Get()
+  list(@Req() req: AuthedRequest) {
+    return this.drafts.listForUser(req.user.id);
+  }
 
   @Patch(':id')
   patch(
