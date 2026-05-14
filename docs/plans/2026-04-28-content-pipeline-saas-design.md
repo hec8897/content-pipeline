@@ -418,15 +418,18 @@ n8n에 들어오는 트래픽은 두 종류:
 | 1a    | [Phase 1a — 인증 기반](./2026-05-09-content-pipeline-phase-1a.md)            | 완료 (#1)                         |
 | 2     | [Phase 2 — AI 인터뷰](./2026-05-10-content-pipeline-phase-2.md)              | 완료 (#3, #4)                     |
 | 3     | [Phase 3 — AI 양산](./2026-05-12-content-pipeline-phase-3.md)                | 완료 (#5)                         |
-| 4     | [Phase 4 — 블로그 편집/미리보기](./2026-05-13-content-pipeline-phase-4.md)   | 진행 중 (frontend + backend 머지) |
-| 5     | _Phase 5 — 카드뉴스 편집/미리보기 (예정)_                                    | —                                 |
+| 4     | [Phase 4 — 블로그 편집/미리보기](./2026-05-13-content-pipeline-phase-4.md)   | 완료 (#6)                         |
+| 5     | [Phase 5 — 대시보드/라이브러리 실데이터](./2026-05-14-content-pipeline-phase-5.md) | 진행 중                           |
+| 6     | _Phase 6 — 카드뉴스 편집/미리보기 (예정)_                                    | —                                 |
 | 1b    | _Phase 1b — 인프라 (ECS/n8n/Cloudflare, 발행 진입 직전)_                     | —                                 |
-| 6     | _Phase 6 — 발행 인프라 (큐/스케줄러/n8n webhook)_                            | —                                 |
-| 7     | _Phase 7 — 네이버 자동_                                                      | —                                 |
-| 8     | _Phase 8 — 인스타 자동_                                                      | —                                 |
-| 9     | _Phase 9 — 통합 + dogfooding_                                                | —                                 |
+| 7     | _Phase 7 — 발행 인프라 (큐/스케줄러/n8n webhook)_                            | —                                 |
+| 8     | _Phase 8 — 네이버 자동_                                                      | —                                 |
+| 9     | _Phase 9 — 인스타 자동_                                                      | —                                 |
+| 10    | _Phase 10 — 통합 + dogfooding_                                               | —                                 |
 
-> **2026-05-13 분배 재정렬**: 기존 Phase 4(편집+미리보기) 를 새 Phase 4(블로그) + 새 Phase 5(카드뉴스) 로 쪼개고, 기존 Phase 5~8(발행 단계) 은 각각 +1 씩 뒤로 (Phase 6~9). 인프라(Phase 1b) 는 발행 진입 직전 (새 Phase 5 와 새 Phase 6 사이).
+> **2026-05-13 분배 재정렬**: 기존 Phase 4(편집+미리보기) 를 새 Phase 4(블로그) + 새 Phase 5(카드뉴스) 로 쪼개고, 기존 Phase 5~8(발행 단계) 은 각각 +1 씩 뒤로 (Phase 6~9). 인프라(Phase 1b) 는 발행 진입 직전.
+>
+> **2026-05-14 분배 재정렬**: 새 Phase 5 = 대시보드/라이브러리 실데이터(딱 리스트 표기까지), 기존 Phase 5(카드뉴스 편집) → Phase 6 으로 밀고 발행 단계들(6~9) → 7~10. 인프라(1b) 위치는 그대로 — 새 Phase 6 과 새 Phase 7 사이.
 
 > 직전 Phase 완료 후 다음 plan을 순차 작성. Phase 1a가 굳혀야 Phase 2 위에 얹을 토대가 명확해짐.
 >
@@ -477,6 +480,10 @@ n8n에 들어오는 트래픽은 두 종류:
 - **2026-05-12**: Phase 3 plan 확정. 양산 = sync 단일 POST + Gemini 2회 호출(카드 JSON / 블로그 마크다운), `drafts` 1 topic : 1 row(regenerate replaces). 카드 HTML→Image 렌더는 Phase 7(인스타 발행) 로 이관 — `/new/edit` 가 JSON 으로 직접 렌더, 이미지 자산은 발행 시점에만 필요. 색상 팔레트 7쌍 화이트리스트로 LLM 출력 컨트롤. zod ^4.4.3 backend dep 추가 (LLM JSON 검증 + class-validator deep tuple 약점 보완).
 - **2026-05-13**: **Phase 분배 재정렬**. 기존 Phase 4(편집+미리보기) 를 둘로 쪼개 새 Phase 4 = 블로그 전용, 새 Phase 5 = 카드뉴스 전용 으로 분리. 기존 Phase 5~8(발행 인프라 / 네이버 / 인스타 / dogfooding) 은 각각 +1 씩 뒤로 (Phase 6~9). 사유 — 블로그/카드뉴스의 편집 UX 가 본질적으로 다르고 한 phase ~2일 가설을 지키려면 분리가 필요. 인프라(Phase 1b) 위치는 그대로 — 새 Phase 5 와 새 Phase 6 사이.
 - **2026-05-13**: Phase 4 plan 확정. 블로그 태그 데이터 모델 = DB 컬럼 분리(`drafts.blog_tags text[]`) + prompt 출력 형식 `TAGS:` prefix 별도 줄로 변경 (Phase 3 의 `#태그` 마지막 줄 규약 폐기) — 마크다운 헤딩 충돌 회피. 편집 UX = split layout(좌 raw 마크다운 textarea / 우 react-markdown 실시간 프리뷰, 50:50, 스크롤 동기화 X) + chip 태그 + CharGuide(1200~1800자 가이드) + Autosave(debounce 800ms, AutosaveIndicator saved/saving/failed 3상태, beforeunload + 라우팅 가드). Pretendard 단일 한국어 sans 도입(JetBrains Mono / Source Serif 4 미도입, 본문 textarea 만 시스템 monospace fallback). 인프라 의존 작업은 모두 발행 phase 로 이관 (네이버 채널 미리보기 mockup 등).
+- **2026-05-14**: **Phase 분배 재정렬**. 새 Phase 5 = 대시보드/라이브러리 실데이터 연결(딱 리스트 표기까지). 기존 Phase 5(카드뉴스 편집) → Phase 6 으로 밀고 발행 단계들(6~9) → 7~10. 사유 — Phase 4 dogfooding 진입 시 본인 양산 콘텐츠가 두 화면에서 안 보이는 게 답답해 우선순위 재배치.
+- **2026-05-14**: Phase 5 plan 확정. backend `GET /api/drafts` 신설 + frontend `useQuery(qk.drafts())` + `draftToContent` 어댑터(`lib/api/adapters.ts`)로 mock LIBRARY_ITEMS 제거. drafts.status → Content.state 매핑(pending/generating → processing, ready → draft, failed → failed). 필터 / 검색 / 발행큐 / hero stat 은 out — 발행 phase 묶음.
+- **2026-05-14**: Phase 5 도중 scope 확장. 상세 페이지(`/library/[id]`) lookup 도 본 phase 로 끌어옴 — 라이브러리 카드 클릭 시 mock LIBRARY_ITEMS.find 로 404 떨어지는 문제 회피. 페이지를 client component 로 변환 + DetailInsta/DetailBlog 가 card_news / blog_title·body·tags prop 으로 직접 받음. DetailOverview 의 인터뷰 영역과 DetailActivity 는 그대로 mock(다음 phase 또는 발행 phase).
+- **2026-05-14**: Phase 5 도중 scope 확장 #2. 편집 라우트를 `?mode=blog` 쿼리에서 `/edit/[mode]` dynamic segment 로 전환 + mock 폐기 + 실데이터 autosave 연결. `/new/edit` 의 DraftEditor autosave 패턴(800ms debounce, pending flag, beforeunload) 을 단일 mode 로 축약 재사용. 기존 `BlogEditPanel.tsx` / `[id]/edit/page.tsx` 폐기, `routes.libraryItemEdit(id, mode)` 의 mode 인자 required 화. 저장 후 `qk.drafts()` 리스트 캐시의 해당 row 만 갱신.
 
 ---
 

@@ -2,7 +2,11 @@
 
 **목표**: Phase 1a 의 mock 으로만 채워져 있던 대시보드(`/`)와 라이브러리(`/library`) 의 콘텐츠 리스트를 drafts 실데이터로 연결한다. 사용자가 본인이 양산한 콘텐츠가 두 화면에서 바로 보이게 만들어 dogfooding 진입 직전 마감을 끝낸다. **딱 리스트 표기까지** — 필터/검색/페이지네이션/상세 페이지 실데이터 연결은 본 phase 스코프 외.
 
-**아키텍처 한 줄**: backend = `GET /api/drafts` 신설(현재 user 의 drafts + topics join, 최신순). frontend = `useDrafts()` React Query hook + `draftToContent(draft)` 어댑터 한 곳에 두고 두 화면에서 동일하게 소비. mock `LIBRARY_ITEMS` 제거.
+**아키텍처 한 줄**: backend = `GET /api/drafts` 신설(현재 user 의 drafts + topics join, 최신순). frontend = `useQuery(qk.drafts())` + `draftToContent(draft)` 어댑터 한 곳에 두고 대시보드/라이브러리/상세 페이지에서 동일하게 소비. mock `LIBRARY_ITEMS` 제거.
+
+**상세 페이지 처리 (2026-05-14 도중 확장)**: `/library/[id]` 가 mock LIBRARY_ITEMS lookup 으로 404 떨어지는 걸 막기 위해 본 phase 에 같이 끼움. 페이지 자체 + `DetailHero` (content 변환) + `DetailInsta` (card_news prop) + `DetailBlog` (blog_title/body/tags prop) 까지. `DetailOverview` 의 인터뷰 영역, `DetailActivity` 는 그대로 mock.
+
+**편집 라우트 처리 (2026-05-14 도중 확장)**: 기존 `/library/[id]/edit?mode=blog` 쿼리 파라미터 라우트를 `/library/[id]/edit/[mode]` dynamic segment 로 전환 + mock 폐기 + 실데이터 autosave. `draftsApi.patch(draft.id, ...)` 호출(Phase 3 endpoint 재사용), `/new/edit` 의 DraftEditor 의 autosave 패턴(800ms debounce + pending flag + beforeunload)을 단일 mode 로 축약. 저장 후 `qk.drafts()` 리스트 캐시의 해당 row 만 갱신해 라이브러리/대시보드/상세 즉시 반영. 기존 `[id]/edit/page.tsx` / `BlogEditPanel.tsx` 폐기, `routes.libraryItemEdit(id, mode)` 시그니처에서 mode 가 required.
 
 **스택**: Phase 4 와 동일 (NestJS 11 + Next.js 16 + Supabase + TanStack Query). 신규 dep 없음.
 
@@ -15,7 +19,8 @@
 - 인프라(Phase 1b) 위치는 그대로 — 새 Phase 6 과 새 Phase 7 사이
 
 **Out-of-scope**:
-- 콘텐츠 상세 페이지(`/library/[id]`) 의 실데이터 연결 — 카드뉴스 편집 phase(=새 Phase 6) 에서 같이 처리하는 게 자연스러움
+- `DetailOverview` 의 인터뷰 질문 영역(interview_messages 별도 fetch 필요) / Sparkline / 채널별 결과 — 발행 phase 까지 mock
+- `DetailActivity` (발행 이력) — 발행 phase 까지 mock
 - 라이브러리 필터(상태별) / 검색 / 정렬 옵션 / 페이지네이션 / infinite scroll
 - 대시보드 hero stat(이번 주 발행 N, 큐 대기 N), 채널 통계 — 발행 phase 까지 mock 유지
 - 발행 큐(`/queue`) 실데이터 — 발행 phase 묶음
