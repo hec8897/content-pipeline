@@ -45,6 +45,18 @@ export class DraftsService {
     return { topic, draft };
   }
 
+  async listForUser(userId: string) {
+    const { data, error } = await this.supabase.admin
+      .from('drafts')
+      .select(
+        'id, status, blog_title, blog_body, blog_tags, card_news, created_at, updated_at, topic:topics!inner(id, title)',
+      )
+      .eq('user_id', userId)
+      .order('updated_at', { ascending: false });
+    if (error) throw new BadRequestException(`Failed to list drafts: ${error.message}`);
+    return data ?? [];
+  }
+
   async generate(topicId: string, userId: string): Promise<DraftRow> {
     const topic = await this.loadOwnedTopic(topicId, userId);
 

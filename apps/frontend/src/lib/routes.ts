@@ -2,8 +2,8 @@ export const routes = {
   home: '/',
   library: '/library',
   libraryItem: (id: string) => `/library/${id}`,
-  libraryItemEdit: (id: string, mode?: 'insta' | 'blog') =>
-    mode ? `/library/${id}/edit?mode=${mode}` : `/library/${id}/edit`,
+  libraryItemEdit: (id: string, mode: 'insta' | 'blog') =>
+    `/library/${id}/edit/${mode}`,
   queue: '/queue',
   channels: '/channels',
   settings: '/settings',

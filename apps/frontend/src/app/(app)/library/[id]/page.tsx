@@ -1,6 +1,9 @@
+'use client';
+
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, useParams } from 'next/navigation';
 import { ChevronLeft, MoreHorizontal } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { DetailHero } from '@/features/detail/components/DetailHero';
 import { DetailTabs } from '@/features/detail/components/DetailTabs';
@@ -9,13 +12,36 @@ import { DetailInsta } from '@/features/detail/components/DetailInsta';
 import { DetailBlog } from '@/features/detail/components/DetailBlog';
 import { DetailActivity } from '@/features/detail/components/DetailActivity';
 import { Button } from '@/components/ui/Button';
-import { LIBRARY_ITEMS } from '@/mocks';
+import { draftsApi } from '@/lib/api/drafts';
+import { qk } from '@/lib/api/queryKeys';
+import { draftToContent } from '@/lib/api/adapters';
 import { routes } from '@/lib/routes';
 
-export default async function ContentDetailPage(props: PageProps<'/library/[id]'>) {
-  const { id } = await props.params;
-  const content = LIBRARY_ITEMS.find((c) => c.id === id);
-  if (!content) notFound();
+export default function ContentDetailPage() {
+  const { id } = useParams<{ id: string }>();
+  const query = useQuery({
+    queryKey: qk.drafts(),
+    queryFn: () => draftsApi.list(),
+  });
+
+  if (query.isLoading) {
+    return <div className="px-7 py-16 text-[13px] text-text-3 text-center">불러오는 중…</div>;
+  }
+  if (query.isError) {
+    return (
+      <div className="px-7 py-16 text-[13px] text-text-3 text-center">
+        콘텐츠를 불러오지 못했어요.{' '}
+        <button onClick={() => query.refetch()} className="text-accent hover:underline">
+          다시 시도
+        </button>
+      </div>
+    );
+  }
+
+  const draft = query.data?.find((d) => d.id === id);
+  if (!draft) notFound();
+
+  const content = draftToContent(draft);
 
   return (
     <>
@@ -36,8 +62,15 @@ export default async function ContentDetailPage(props: PageProps<'/library/[id]'
       <DetailTabs
         panels={{
           overview: <DetailOverview content={content} />,
-          insta: <DetailInsta contentId={content.id} />,
-          blog: <DetailBlog contentId={content.id} />,
+          insta: <DetailInsta contentId={content.id} cards={draft.card_news ?? []} />,
+          blog: (
+            <DetailBlog
+              contentId={content.id}
+              title={draft.blog_title}
+              body={draft.blog_body}
+              tags={draft.blog_tags}
+            />
+          ),
           activity: <DetailActivity />,
         }}
       />

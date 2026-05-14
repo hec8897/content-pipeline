@@ -90,6 +90,22 @@ export interface DraftWithTopic {
   draft: Draft | null;
 }
 
+// GET /api/drafts 응답 한 row 모양. drafts + topics!inner(id, title) join.
+export interface DraftListItem {
+  id: string;
+  status: DraftStatus;
+  blog_title: string | null;
+  blog_body: string | null;
+  blog_tags: string[];
+  card_news: CardNewsCardData[] | null;
+  created_at: string;
+  updated_at: string;
+  topic: {
+    id: string;
+    title: string;
+  };
+}
+
 export interface PatchDraftPayload {
   card_news?: CardNewsCardData[];
   blog_title?: string;
