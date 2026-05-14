@@ -49,7 +49,7 @@ export class DraftsService {
     const { data, error } = await this.supabase.admin
       .from('drafts')
       .select(
-        'id, status, blog_title, blog_tags, card_news, created_at, updated_at, topic:topics!inner(id, title)',
+        'id, status, blog_title, blog_body, blog_tags, card_news, created_at, updated_at, topic:topics!inner(id, title)',
       )
       .eq('user_id', userId)
       .order('updated_at', { ascending: false });
