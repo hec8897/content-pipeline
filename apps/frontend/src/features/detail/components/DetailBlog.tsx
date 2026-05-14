@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { Eye, Heart, MessageSquare, Pencil } from 'lucide-react';
-import { NAVER_BLOG_BODY, NAVER_BLOG_TITLE } from '@/mocks';
 import { routes } from '@/lib/routes';
 
 function renderMarkdown(md: string) {
@@ -70,9 +69,14 @@ function renderMarkdown(md: string) {
   return out;
 }
 
-type Props = { contentId: string };
+type Props = {
+  contentId: string;
+  title: string | null;
+  body: string | null;
+  tags: string[];
+};
 
-export function DetailBlog({ contentId }: Props) {
+export function DetailBlog({ contentId, title, body, tags }: Props) {
   return (
     <div className="px-7 py-6 flex flex-col gap-4">
       <div className="max-w-[720px] mx-auto w-full flex items-center justify-between gap-3">
@@ -92,25 +96,45 @@ export function DetailBlog({ contentId }: Props) {
           </span>
         </header>
         <div className="px-6 pt-5 pb-2 flex items-center justify-between">
-          <span className="text-[11.5px] font-medium text-naver">#일상 / 반려동물</span>
+          <span className="text-[11.5px] font-medium text-naver">#일상</span>
           <span className="text-[11px] text-text-3">이웃 1,247명</span>
         </div>
         <div className="px-6 pt-3 pb-5 border-b border-border">
-          <h1 className="text-[22px] font-bold text-text leading-tight">{NAVER_BLOG_TITLE}</h1>
+          <h1 className="text-[22px] font-bold text-text leading-tight">
+            {title ?? '제목 없음'}
+          </h1>
           <div className="flex items-center gap-3 mt-2 text-[11px] text-text-3">
-            <span>2026.05.07</span>
+            <span>—</span>
             <span className="inline-flex items-center gap-1">
-              <Eye className="w-3 h-3" /> 1,284
+              <Eye className="w-3 h-3" /> 0
             </span>
             <span className="inline-flex items-center gap-1">
-              <Heart className="w-3 h-3" /> 96
+              <Heart className="w-3 h-3" /> 0
             </span>
             <span className="inline-flex items-center gap-1">
-              <MessageSquare className="w-3 h-3" /> 8
+              <MessageSquare className="w-3 h-3" /> 0
             </span>
           </div>
         </div>
-        <div className="px-6 py-5 prose-sm">{renderMarkdown(NAVER_BLOG_BODY)}</div>
+        <div className="px-6 py-5 prose-sm">
+          {body ? (
+            renderMarkdown(body)
+          ) : (
+            <p className="text-[13px] text-text-3 text-center py-8">본문이 비어 있어요.</p>
+          )}
+        </div>
+        {tags.length > 0 && (
+          <div className="px-6 pt-2 pb-5 border-t border-border flex flex-wrap gap-1.5">
+            {tags.map((t) => (
+              <span
+                key={t}
+                className="text-[11.5px] text-naver bg-surface-2 rounded-full px-2 py-0.5"
+              >
+                #{t}
+              </span>
+            ))}
+          </div>
+        )}
       </article>
     </div>
   );

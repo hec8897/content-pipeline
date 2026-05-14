@@ -1,7 +1,12 @@
 import { api } from './client';
-import type { Draft, DraftWithTopic, PatchDraftPayload } from './types';
+import type { Draft, DraftListItem, DraftWithTopic, PatchDraftPayload } from './types';
 
 export const draftsApi = {
+  async list(): Promise<DraftListItem[]> {
+    const res = await api.get<DraftListItem[]>('/drafts');
+    return res.data;
+  },
+
   async generate(topicId: string): Promise<Draft> {
     const res = await api.post<Draft>(`/topics/${topicId}/draft/generate`);
     return res.data;
