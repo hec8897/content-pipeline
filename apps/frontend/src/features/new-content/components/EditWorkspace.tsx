@@ -1,24 +1,21 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowRight, Loader2, RotateCw } from 'lucide-react';
 
 import { useNewContent } from '@/features/new-content/context';
 import { BlogEditor } from '@/features/new-content/components/BlogEditor';
-import {
-  AutosaveIndicator,
-  type AutosaveStatus,
-} from '@/features/new-content/components/AutosaveIndicator';
+import { AutosaveIndicator } from '@/features/new-content/components/AutosaveIndicator';
+import { useDraftAutosave } from '@/features/new-content/hooks/useDraftAutosave';
 import { CardNewsEditor } from '@/features/detail/components/CardNewsEditor';
 import { ApiError } from '@/lib/api/client';
 import { draftsApi } from '@/lib/api/drafts';
 import { qk } from '@/lib/api/queryKeys';
 import { routes } from '@/lib/routes';
-import type { CardNewsCardData, Draft, DraftWithTopic } from '@/lib/api/types';
-import type { CardNewsCard } from '@/types';
+import type { Draft, DraftWithTopic } from '@/lib/api/types';
 
 const TABS = [
   { key: 'insta', label: '인스타 카드뉴스' },
@@ -26,33 +23,6 @@ const TABS = [
 ] as const;
 
 type TabKey = (typeof TABS)[number]['key'];
-
-const AUTOSAVE_DEBOUNCE_MS = 800;
-
-function toEditorCards(cards: CardNewsCardData[]): CardNewsCard[] {
-  return cards.map((c, i) => ({
-    ...c,
-    id: c.type === 'body' ? `body-${c.num ?? i}` : `${c.type}-${i}`,
-  }));
-}
-
-function fromEditorCards(cards: CardNewsCard[]): CardNewsCardData[] {
-  return cards.map((c) => {
-    const { id, ...rest } = c;
-    void id;
-    return rest;
-  });
-}
-
-function formatSavedAgo(savedAt: number, now: number): string {
-  const diffSec = Math.max(0, Math.floor((now - savedAt) / 1000));
-  if (diffSec < 10) return '방금';
-  if (diffSec < 60) return `${diffSec}초 전`;
-  const min = Math.floor(diffSec / 60);
-  if (min < 60) return `${min}분 전`;
-  const hour = Math.floor(min / 60);
-  return `${hour}시간 전`;
-}
 
 export function EditWorkspace() {
   const router = useRouter();
@@ -149,107 +119,18 @@ function DraftEditor({ draft, topicId }: { draft: Draft; topicId: string }) {
   const qc = useQueryClient();
   const [tab, setTab] = useState<TabKey>('insta');
 
-  const initialCards = useMemo(
-    () => toEditorCards(draft.card_news ?? []),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
-  );
-  const [cards, setCards] = useState<CardNewsCard[]>(initialCards);
-  const [blogTitle, setBlogTitle] = useState(draft.blog_title ?? '');
-  const [blogBody, setBlogBody] = useState(draft.blog_body ?? '');
-  const [blogTags, setBlogTags] = useState<string[]>(draft.blog_tags);
-  const [dirty, setDirty] = useState(false);
-
-  const [autosaveStatus, setAutosaveStatus] = useState<AutosaveStatus>('saved');
-  const [lastSavedAt, setLastSavedAt] = useState<number>(() =>
-    draft.generated_at ? new Date(draft.generated_at).getTime() : Date.now(),
-  );
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(id);
-  }, []);
-  const savedAgo = formatSavedAgo(lastSavedAt, now);
-
-  const pendingChangeRef = useRef(false);
-
-  const mutation = useMutation({
-    mutationFn: () =>
-      draftsApi.patch(draft.id, {
-        card_news: fromEditorCards(cards),
-        blog_title: blogTitle,
-        blog_body: blogBody,
-        blog_tags: blogTags,
-      }),
-    onMutate: () => {
-      setAutosaveStatus('saving');
-    },
-    onSuccess: (updated) => {
+  const autosave = useDraftAutosave({
+    draft,
+    initialSavedAtIso: draft.generated_at,
+    onPatched: (updated) =>
       qc.setQueryData<DraftWithTopic>(qk.draft(topicId), (prev) =>
         prev ? { ...prev, draft: updated } : prev,
-      );
-      setDirty(false);
-      setLastSavedAt(Date.now());
-      setAutosaveStatus('saved');
-      if (pendingChangeRef.current) {
-        pendingChangeRef.current = false;
-        setDirty(true);
-      }
-    },
-    onError: () => {
-      setAutosaveStatus('failed');
-    },
+      ),
   });
-  const { mutate, isPending } = mutation;
-
-  useEffect(() => {
-    if (!dirty) return;
-    const t = setTimeout(() => {
-      if (isPending) {
-        pendingChangeRef.current = true;
-      } else {
-        mutate();
-      }
-    }, AUTOSAVE_DEBOUNCE_MS);
-    return () => clearTimeout(t);
-  }, [dirty, blogTitle, blogBody, blogTags, cards, isPending, mutate]);
-
-  useEffect(() => {
-    if (!dirty && !isPending) return;
-    const handler = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      e.returnValue = '';
-    };
-    window.addEventListener('beforeunload', handler);
-    return () => window.removeEventListener('beforeunload', handler);
-  }, [dirty, isPending]);
-
-  const onCardsChange = (next: CardNewsCard[]) => {
-    setCards(next);
-    setDirty(true);
-  };
-  const onBlogTitleChange = (next: string) => {
-    setBlogTitle(next);
-    setDirty(true);
-  };
-  const onBlogBodyChange = (next: string) => {
-    setBlogBody(next);
-    setDirty(true);
-  };
-  const onBlogTagsChange = (next: string[]) => {
-    setBlogTags(next);
-    setDirty(true);
-  };
-
-  const onRetrySave = () => {
-    if (isPending) return;
-    mutate();
-  };
 
   const onPublishClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    if (!dirty && !isPending) return;
-    const ok = window.confirm('저장 중인 변경 사항이 있어요. 그대로 이동할까요?');
-    if (!ok) {
+    if (!autosave.isDirtyOrPending) return;
+    if (!autosave.confirmDiscardIfDirty()) {
       e.preventDefault();
       return;
     }
@@ -278,9 +159,9 @@ function DraftEditor({ draft, topicId }: { draft: Draft; topicId: string }) {
 
         <div className="ml-auto flex items-center gap-3">
           <AutosaveIndicator
-            status={autosaveStatus}
-            savedAgo={savedAgo}
-            onRetry={onRetrySave}
+            status={autosave.autosaveStatus}
+            savedAgo={autosave.savedAgo}
+            onRetry={autosave.retry}
           />
           <Link
             href={routes.newPublish}
@@ -293,15 +174,15 @@ function DraftEditor({ draft, topicId }: { draft: Draft; topicId: string }) {
       </div>
 
       {tab === 'insta' ? (
-        <CardNewsEditor initial={initialCards} onChange={onCardsChange} />
+        <CardNewsEditor initial={autosave.initialCards} onChange={autosave.setCards} />
       ) : (
         <BlogEditor
-          title={blogTitle}
-          body={blogBody}
-          tags={blogTags}
-          onTitleChange={onBlogTitleChange}
-          onBodyChange={onBlogBodyChange}
-          onTagsChange={onBlogTagsChange}
+          title={autosave.blogTitle}
+          body={autosave.blogBody}
+          tags={autosave.blogTags}
+          onTitleChange={autosave.setBlogTitle}
+          onBodyChange={autosave.setBlogBody}
+          onTagsChange={autosave.setBlogTags}
         />
       )}
     </div>
