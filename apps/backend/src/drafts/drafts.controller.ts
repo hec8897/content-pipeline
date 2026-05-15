@@ -1,4 +1,16 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Req, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import type { Request } from 'express';
 import type { User } from '@supabase/supabase-js';
 
@@ -26,5 +38,17 @@ export class DraftsController {
     @Body() dto: PatchDraftDto,
   ) {
     return this.drafts.patch(id, req.user.id, dto);
+  }
+
+  @Post(':id/cards/:index/regenerate-image')
+  regenerateCardImage(
+    @Req() req: AuthedRequest,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('index', ParseIntPipe) index: number,
+  ) {
+    if (index < 0 || index > 7) {
+      throw new BadRequestException('index must be 0..7');
+    }
+    return this.drafts.regenerateCardImage(id, req.user.id, index);
   }
 }
