@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -19,7 +19,11 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Plus, Sparkles, Trash2, Upload } from 'lucide-react';
+import { useMutation } from '@tanstack/react-query';
+import { GripVertical, Loader2, Plus, RotateCw, Sparkles, Trash2, Upload } from 'lucide-react';
+
+import { ApiError } from '@/lib/api/client';
+import { draftsApi } from '@/lib/api/drafts';
 import type { CardNewsCard } from '@/types';
 
 const PRESETS: { bg: string; fg: string }[] = [
@@ -34,6 +38,8 @@ const PRESETS: { bg: string; fg: string }[] = [
 ];
 
 type Props = {
+  /** AI 재생성 호출 대상 draft id. Phase 6 — cover/outro 카드 배경 이미지 즉석 생성. */
+  draftId: string;
   initial: CardNewsCard[];
   onChange?: (cards: CardNewsCard[]) => void;
   onSave?: (cards: CardNewsCard[]) => void;
@@ -58,12 +64,20 @@ function SortableCard({
     id: card.id,
   });
 
+  const hasImage = !!card.bg_image;
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
-    background: card.bg,
-    color: card.fg,
     opacity: isDragging ? 0.4 : 1,
+    ...(hasImage
+      ? {
+          backgroundColor: card.bg,
+          backgroundImage: `url(${card.bg_image})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          color: 'white',
+        }
+      : { background: card.bg, color: card.fg }),
   };
 
   return (
@@ -71,14 +85,21 @@ function SortableCard({
       ref={setNodeRef}
       style={style}
       onClick={onSelect}
-      className={`relative aspect-square rounded-md p-3.5 cursor-pointer flex flex-col justify-between ${
+      className={`relative aspect-square rounded-md p-3.5 cursor-pointer flex flex-col justify-between overflow-hidden ${
         selected
           ? 'outline outline-2 outline-accent shadow-[0_0_0_4px_var(--color-accent-soft)]'
           : 'outline outline-1 outline-border'
       }`}
     >
+      {hasImage && (
+        <div
+          aria-hidden
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: 'rgba(0,0,0,0.35)' }}
+        />
+      )}
       {/* index pill */}
-      <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 bg-black/30 text-white rounded text-[10px] font-mono backdrop-blur">
+      <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 bg-black/30 text-white rounded text-[10px] font-mono backdrop-blur z-10">
         {String(index + 1).padStart(2, '0')}
       </div>
       {/* drag handle */}
@@ -86,7 +107,7 @@ function SortableCard({
         {...attributes}
         {...listeners}
         onClick={(e) => e.stopPropagation()}
-        className="absolute top-1.5 right-1.5 p-1 bg-black/30 text-white rounded backdrop-blur cursor-grab active:cursor-grabbing"
+        className="absolute top-1.5 right-1.5 p-1 bg-black/30 text-white rounded backdrop-blur cursor-grab active:cursor-grabbing z-10"
         aria-label="drag"
       >
         <GripVertical className="w-3 h-3" />
@@ -99,16 +120,16 @@ function SortableCard({
             e.stopPropagation();
             onDelete();
           }}
-          className="absolute bottom-1.5 right-1.5 w-[22px] h-[22px] rounded-full bg-danger text-white flex items-center justify-center hover:scale-110 transition"
+          className="absolute bottom-1.5 right-1.5 w-[22px] h-[22px] rounded-full bg-danger text-white flex items-center justify-center hover:scale-110 transition z-10"
           aria-label="delete"
         >
           ✕
         </button>
       )}
 
-      <div />
+      <div className="relative z-10" />
       <div
-        className={`flex flex-col gap-1 ${
+        className={`relative z-10 flex flex-col gap-1 ${
           card.type === 'cover' || card.type === 'outro' ? 'text-center' : ''
         }`}
       >
@@ -134,9 +155,13 @@ function SortableCard({
   );
 }
 
-export function CardNewsEditor({ initial, onChange, onSave }: Props) {
+export function CardNewsEditor({ draftId, initial, onChange, onSave }: Props) {
   const [cards, setCards] = useState<CardNewsCard[]>(initial);
   const [selectedId, setSelectedId] = useState<string>(initial[0]?.id ?? '');
+
+  // mutation 콜백이 최신 cards 를 보도록 ref 동기화.
+  const cardsRef = useRef(cards);
+  cardsRef.current = cards;
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -161,6 +186,48 @@ export function CardNewsEditor({ initial, onChange, onSave }: Props) {
 
   const updateSelected = (patch: Partial<CardNewsCard>) => {
     applyCards(cards.map((c) => (c.id === selected.id ? { ...c, ...patch } : c)));
+  };
+
+  const regenMutation = useMutation({
+    mutationFn: ({ index }: { cardId: string; index: number }) =>
+      draftsApi.regenerateCardImage(draftId, index),
+    onSuccess: (res, vars) => {
+      const dataUrl = `data:image/png;base64,${res.imageBase64}`;
+      const next = cardsRef.current.map((c) =>
+        c.id === vars.cardId ? { ...c, bg_image: dataUrl } : c,
+      );
+      applyCards(next);
+    },
+  });
+
+  const regenError =
+    regenMutation.error instanceof ApiError
+      ? regenMutation.error.message
+      : regenMutation.error
+        ? '이미지 생성에 실패했어요'
+        : null;
+  const regenerate = () => {
+    if (!selected || selectedIdx < 0) return;
+    regenMutation.mutate({ cardId: selected.id, index: selectedIdx });
+  };
+
+  // 로컬 파일 업로드 — FileReader 로 data URL → bg_image. AI 재생성과 동일한 in-memory 패턴.
+  // 추후 Storage 연동 시 이 경로가 영속화로 바뀜.
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const triggerUpload = () => fileInputRef.current?.click();
+  const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file || !selected) return;
+    if (!file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result;
+      if (typeof result === 'string') {
+        updateSelected({ bg_image: result });
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -317,20 +384,69 @@ export function CardNewsEditor({ initial, onChange, onSave }: Props) {
           </div>
         </div>
 
-        {/* 이미지 */}
+        {/* 이미지 — 모든 카드에서 AI 재생성 + 로컬 업로드 가능 */}
         <div className="flex flex-col gap-2 border border-dashed border-border rounded-md p-2.5">
           <span className="text-[11px] text-text-2">
-            현재 단색 배경 — 이미지로 교체할 수 있어요
+            {selected?.bg_image
+              ? '배경 이미지가 적용됐어요'
+              : '단색 배경 — 이미지로 교체할 수 있어요'}
           </span>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleFileSelected}
+          />
           <div className="flex items-center gap-1.5">
-            <button className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 rounded text-[11px] border border-border text-text-2 hover:bg-surface-2">
+            <button
+              onClick={triggerUpload}
+              className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 rounded text-[11px] border border-border text-text-2 hover:bg-surface-2"
+            >
               <Upload className="w-3 h-3" /> 업로드
             </button>
-            <button className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 rounded text-[11px] border border-border text-text-2 hover:bg-surface-2">
-              <Sparkles className="w-3 h-3" /> AI 재생성
+            <button
+              onClick={regenerate}
+              disabled={regenMutation.isPending}
+              className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 rounded text-[11px] border border-border text-text-2 hover:bg-surface-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {regenMutation.isPending ? (
+                <>
+                  <Loader2 className="w-3 h-3 animate-spin" /> 생성 중…
+                </>
+              ) : selected?.bg_image ? (
+                <>
+                  <RotateCw className="w-3 h-3" /> AI 다시
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-3 h-3" /> AI 재생성
+                </>
+              )}
             </button>
           </div>
-          <span className="text-[10.5px] font-mono text-text-3">gemini-2.5-flash · 7s 예상</span>
+          {selected?.bg_image && (
+            <button
+              onClick={() => updateSelected({ bg_image: undefined })}
+              className="self-start text-[10.5px] text-text-3 hover:text-text underline"
+            >
+              이미지 제거 → 단색으로
+            </button>
+          )}
+          {regenError && (
+            <div className="flex flex-col gap-1 rounded bg-red-500/10 border border-red-500/30 px-2 py-1.5">
+              <span className="text-[10.5px] text-red-500">{regenError}</span>
+              <button
+                onClick={regenerate}
+                className="self-start text-[10.5px] underline text-red-500 hover:text-red-600"
+              >
+                다시 시도
+              </button>
+            </div>
+          )}
+          <span className="text-[10.5px] text-text-3">
+            💡 배경 이미지는 새로고침 시 사라져요 (영속화는 추후 phase)
+          </span>
         </div>
 
         <div className="bg-surface-2 rounded p-2 text-[10.5px] text-text-3">

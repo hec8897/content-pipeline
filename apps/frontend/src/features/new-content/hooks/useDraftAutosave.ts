@@ -31,8 +31,10 @@ export function toEditorCards(cards: CardNewsCardData[]): CardNewsCard[] {
 
 export function fromEditorCards(cards: CardNewsCard[]): CardNewsCardData[] {
   return cards.map((c) => {
-    const { id, ...rest } = c;
+    // Phase 6 — bg_image 는 클라 in-memory only. autosave payload 에서 제외.
+    const { id, bg_image, ...rest } = c;
     void id;
+    void bg_image;
     return rest;
   });
 }

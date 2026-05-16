@@ -174,7 +174,11 @@ function DraftEditor({ draft, topicId }: { draft: Draft; topicId: string }) {
       </div>
 
       {tab === 'insta' ? (
-        <CardNewsEditor initial={autosave.initialCards} onChange={autosave.setCards} />
+        <CardNewsEditor
+          draftId={draft.id}
+          initial={autosave.initialCards}
+          onChange={autosave.setCards}
+        />
       ) : (
         <BlogEditor
           title={autosave.blogTitle}
