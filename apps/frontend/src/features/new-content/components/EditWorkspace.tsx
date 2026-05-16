@@ -11,11 +11,12 @@ import { BlogEditor } from '@/features/new-content/components/BlogEditor';
 import { AutosaveIndicator } from '@/features/new-content/components/AutosaveIndicator';
 import { useDraftAutosave } from '@/features/new-content/hooks/useDraftAutosave';
 import { CardNewsEditor } from '@/features/detail/components/CardNewsEditor';
+import { PngExportButton } from '@/features/insta-export/components/PngExportButton';
 import { ApiError } from '@/lib/api/client';
 import { draftsApi } from '@/lib/api/drafts';
 import { qk } from '@/lib/api/queryKeys';
 import { routes } from '@/lib/routes';
-import type { Draft, DraftWithTopic } from '@/lib/api/types';
+import type { Draft, DraftWithTopic, Topic } from '@/lib/api/types';
 
 const TABS = [
   { key: 'insta', label: '인스타 카드뉴스' },
@@ -83,7 +84,7 @@ export function EditWorkspace() {
     );
   }
 
-  return <DraftEditor draft={data.draft} topicId={topicId} />;
+  return <DraftEditor draft={data.draft} topic={data.topic} topicId={topicId} />;
 }
 
 function ErrorPanel({
@@ -114,7 +115,15 @@ function ErrorPanel({
   );
 }
 
-function DraftEditor({ draft, topicId }: { draft: Draft; topicId: string }) {
+function DraftEditor({
+  draft,
+  topic,
+  topicId,
+}: {
+  draft: Draft;
+  topic: Topic;
+  topicId: string;
+}) {
   const router = useRouter();
   const qc = useQueryClient();
   const [tab, setTab] = useState<TabKey>('insta');
@@ -163,6 +172,9 @@ function DraftEditor({ draft, topicId }: { draft: Draft; topicId: string }) {
             savedAgo={autosave.savedAgo}
             onRetry={autosave.retry}
           />
+          {tab === 'insta' && (
+            <PngExportButton cards={autosave.cards} topicTitle={topic.title} />
+          )}
           <Link
             href={routes.newPublish}
             onClick={onPublishClick}

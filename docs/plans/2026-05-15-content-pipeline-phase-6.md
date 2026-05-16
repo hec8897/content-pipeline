@@ -17,6 +17,7 @@
 - DB 스키마 변경 / 마이그레이션 — drafts 테이블 그대로
 - 배경 이미지의 영속성 — 의도된 in-memory only (AI 재생성 / 로컬 업로드 둘 다). 새로고침 시 사라짐 → 다시 생성/업로드 (사용자 안내 필요). Storage 연동은 추후 phase
 - **인스타 미리보기 모달 / 캐러셀** — 그리드 8장 동시 표시로 충분히 검증 가능하다는 판단(2026-05-16 결정). 단일 카드 확대 뷰 / swipe 시뮬레이션 없음. PNG 다운로드는 헤더 actions 버튼이 직접 트리거.
+- **사진 위치 조절** (`backgroundPosition` X/Y 슬라이더 / drag 또는 crop UI) — 현재 `backgroundSize: 'cover', backgroundPosition: 'center'` 고정. 추후 phase 에서 처리.
 
 **도메인 결정 뒤집기 (2026-05-16 기록):**
 - 원래 plan 에선 (1) "AI 이미지 생성 대상 = cover/outro 카드만" (2) "이미지 업로드 = Storage 결정 후 별도 phase" (3) "인스타 미리보기 모달 + swipe 캐러셀" 이었으나 — dogfooding 진입 직전 본인 판단으로 (1) body 카드도 AI 재생성 허용 (2) 로컬 파일 업로드 부활 (FileReader → data URL, AI 와 동일 in-memory) (3) 캐러셀 제거, 그리드 8장으로 충분, PNG zip 다운로드만 헤더 actions 로 유지. Storage 연동은 동일하게 추후 phase.
