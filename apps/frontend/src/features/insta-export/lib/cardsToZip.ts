@@ -26,15 +26,16 @@ export async function cardsToZip(cards: CardNewsCard[], topicTitle: string): Pro
   try {
     for (let i = 0; i < cards.length; i++) {
       const card = cards[i];
+      const slot = String(i + 1).padStart(2, '0');
       flushSync(() => {
         root.render(createElement(InstaPreviewCard, { card }));
       });
       const node = container.firstElementChild as HTMLElement | null;
-      if (!node) throw new Error(`Failed to render card ${i + 1}`);
+      if (!node) throw new Error(`카드 ${slot} 렌더 실패`);
       const dataUrl = await toPng(node, { width: 1080, height: 1080, pixelRatio: 1 });
       const base64 = dataUrl.split(',')[1] ?? '';
-      if (!base64) throw new Error(`Empty PNG for card ${i + 1}`);
-      zip.file(`card-${String(i + 1).padStart(2, '0')}.png`, base64, { base64: true });
+      if (!base64) throw new Error(`카드 ${slot} PNG 추출 실패`);
+      zip.file(`card-${slot}.png`, base64, { base64: true });
     }
 
     const blob = await zip.generateAsync({ type: 'blob' });

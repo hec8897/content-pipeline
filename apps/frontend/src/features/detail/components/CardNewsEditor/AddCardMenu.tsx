@@ -20,11 +20,18 @@ export function AddCardMenu({
 
   useEffect(() => {
     if (!open) return;
-    const handler = (e: MouseEvent) => {
+    const onMouse = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', onMouse);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onMouse);
+      document.removeEventListener('keydown', onKey);
+    };
   }, [open]);
 
   const atMax = cards.length >= maxCards;
@@ -44,6 +51,8 @@ export function AddCardMenu({
           setOpen((o) => !o);
         }}
         disabled={atMax}
+        aria-haspopup="menu"
+        aria-expanded={open}
         title={atMax ? `이미 ${maxCards}장 (최대)` : undefined}
         className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[11.5px] text-text-2 border border-border hover:bg-surface-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
       >
@@ -51,10 +60,14 @@ export function AddCardMenu({
         <ChevronDown className="w-3 h-3" />
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-1 z-20 bg-surface border border-border rounded-md shadow-md min-w-[160px] py-1">
+        <div
+          role="menu"
+          className="absolute right-0 top-full mt-1 z-20 bg-surface border border-border rounded-md shadow-md min-w-[160px] py-1"
+        >
           {items.map((it) => (
             <button
               key={it.type}
+              role="menuitem"
               onClick={() => {
                 onAdd(it.type);
                 setOpen(false);
