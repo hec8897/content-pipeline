@@ -118,7 +118,7 @@ export function buildBlogPrompt(
   };
 }
 
-// Phase 6 — cover/outro 카드 배경 이미지 생성.
+// Phase 6 — 모든 카드 (cover/body/outro) 의 배경 이미지 생성.
 // 메모리 룰 [llm_content_guardrails]: transcript 외 사실 도입 금지 + 정치·종교·시사·특정 인물 회피.
 // 이미지엔 텍스트 렌더 시도 X — 텍스트는 카드 본문 layer 가 책임 (이미지는 분위기/일러스트 톤).
 export const IMAGE_GEN_SYSTEM = `당신은 한국 인스타그램 피드 톤에 어울리는 카드뉴스 배경 일러스트를 만든다.
@@ -140,30 +140,32 @@ export const IMAGE_GEN_SYSTEM = `당신은 한국 인스타그램 피드 톤에 
 //   - 영어 스타일 디스크립터로 톤 유도
 //   - "no text, no people" 처럼 negation 은 끝에 짧게
 export function buildCardImagePromptForFlux(card: CardNewsCard, topic: string): string {
+  const title = card.title.replace(/\n/g, ' ');
   let subject: string;
   if (card.type === 'cover') {
-    subject = card.title.replace(/\n/g, ' ');
+    subject = title;
   } else if (card.type === 'outro') {
-    subject = `${card.title.replace(/\n/g, ' ')}. ${(card.body ?? '').replace(/\n/g, ' ')}`;
+    subject = `${title}. ${card.body.replace(/\n/g, ' ')}`;
   } else {
-    throw new Error(`buildCardImagePromptForFlux called with body card`);
+    // body 카드: title + body 합쳐 핵심 키워드 추출 (Flux 토큰 윈도우 고려해 짧게).
+    subject = `${title}. ${card.body.replace(/\n/g, ' ')}`;
   }
   return `${topic}. ${subject}. Minimalist pastel illustration, soft warm colors, abstract shapes, korean instagram aesthetic, square 1:1, no text, no faces.`;
 }
 
 export function buildCardImagePrompt(card: CardNewsCard, topic: string): string {
   // user-facing 텍스트만 보냄 (transcript 전체 X — privacy + 토큰).
-  // service 단에서 type 가드 통과한 cover/outro 만 들어옴.
   let summary: string;
   let role: string;
   if (card.type === 'cover') {
     summary = `${card.title}${card.subtitle ? ` / ${card.subtitle}` : ''}${card.tag ? ` (${card.tag})` : ''}`;
     role = '카드뉴스 표지';
   } else if (card.type === 'outro') {
-    summary = `${card.title} — ${card.body}${card.cta ? ` / ${card.cta}` : ''}`;
+    summary = `${card.title} — ${card.body ?? ''}${card.cta ? ` / ${card.cta}` : ''}`;
     role = '카드뉴스 마지막 슬라이드(아웃트로)';
   } else {
-    throw new Error(`buildCardImagePrompt called with body card — service-layer guard skipped`);
+    summary = `${card.title}${card.body ? ` — ${card.body}` : ''}`;
+    role = '카드뉴스 본문 슬라이드';
   }
   return `주제: "${topic}"
 

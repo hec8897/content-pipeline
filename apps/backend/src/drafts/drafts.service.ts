@@ -115,7 +115,7 @@ export class DraftsService {
     }
   }
 
-  // Phase 6 — cover/outro 카드만 AI 배경 이미지 재생성. 응답은 클라 in-memory 만 (DB 저장 X).
+  // Phase 6 — 모든 카드 AI 배경 이미지 재생성 허용. 응답은 클라 in-memory 만 (DB 저장 X).
   async regenerateCardImage(
     draftId: string,
     userId: string,
@@ -134,9 +134,6 @@ export class DraftsService {
       throw new BadRequestException(`cardIndex ${cardIndex} out of range`);
     }
     const card = cards[cardIndex];
-    if (card.type !== 'cover' && card.type !== 'outro') {
-      throw new BadRequestException('Only cover/outro cards can regenerate image');
-    }
 
     const topic = await this.loadOwnedTopic(draft.topic_id, userId);
     const { imageBase64 } = await this.gemini.generateImage({
