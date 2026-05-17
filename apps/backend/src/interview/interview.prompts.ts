@@ -1,4 +1,4 @@
-import type { Content, GenerateContentRequest } from '@google/generative-ai';
+import type { LlmRequest } from '@/llm/types';
 
 export interface InterviewHistoryItem {
   role: 'assistant' | 'user';
@@ -16,24 +16,13 @@ const SYSTEM_INSTRUCTION = `당신은 한국어로 진행하는 콘텐츠 작가
 - 사용자의 개인 경험·구체적 장면·감정·숫자·고유명사를 끌어내는 쪽으로 유도.
 - 마크다운, 따옴표, 번호 매기기 금지. 질문 텍스트만.`;
 
-function toContents(history: InterviewHistoryItem[]): Content[] {
-  return history.map((msg) => ({
-    role: msg.role === 'assistant' ? 'model' : 'user',
-    parts: [{ text: msg.content }],
-  }));
-}
-
-export function buildFirstQuestionPrompt(topic: string): GenerateContentRequest {
+export function buildFirstQuestionPrompt(topic: string): LlmRequest {
   return {
-    systemInstruction: { role: 'system', parts: [{ text: SYSTEM_INSTRUCTION }] },
-    contents: [
+    system: SYSTEM_INSTRUCTION,
+    messages: [
       {
         role: 'user',
-        parts: [
-          {
-            text: `주제: "${topic}"\n\n위 주제에 대해 사용자에게 던질 첫 질문을 만들어줘. 주제를 그대로 되묻지 말고, 사용자의 구체적 경험으로 한 발 들어가는 질문이어야 해.`,
-          },
-        ],
+        content: `주제: "${topic}"\n\n위 주제에 대해 사용자에게 던질 첫 질문을 만들어줘. 주제를 그대로 되묻지 말고, 사용자의 구체적 경험으로 한 발 들어가는 질문이어야 해.`,
       },
     ],
   };
@@ -42,42 +31,30 @@ export function buildFirstQuestionPrompt(topic: string): GenerateContentRequest 
 export function buildNextQuestionPrompt(
   topic: string,
   history: InterviewHistoryItem[],
-): GenerateContentRequest {
+): LlmRequest {
   return {
-    systemInstruction: { role: 'system', parts: [{ text: SYSTEM_INSTRUCTION }] },
-    contents: [
+    system: SYSTEM_INSTRUCTION,
+    messages: [
       {
         role: 'user',
-        parts: [
-          {
-            text: `주제: "${topic}"\n지금까지 인터뷰가 이어지고 있어. 직전 사용자 답변을 받아 한 단계 더 깊게 파고드는 다음 질문을 만들어줘.`,
-          },
-        ],
+        content: `주제: "${topic}"\n지금까지 인터뷰가 이어지고 있어. 직전 사용자 답변을 받아 한 단계 더 깊게 파고드는 다음 질문을 만들어줘.`,
       },
-      ...toContents(history),
-      {
-        role: 'user',
-        parts: [{ text: '다음 질문을 출력해.' }],
-      },
+      ...history.map((m) => ({ role: m.role, content: m.content })),
+      { role: 'user' as const, content: '다음 질문을 출력해.' },
     ],
   };
 }
 
-export function buildEnoughJudgePrompt(
-  topic: string,
-  history: InterviewHistoryItem[],
-): GenerateContentRequest {
+export function buildEnoughJudgePrompt(topic: string, history: InterviewHistoryItem[]): LlmRequest {
   const transcript = history
     .map((m) => `${m.role === 'assistant' ? 'Q' : 'A'}: ${m.content}`)
     .join('\n');
 
   return {
-    contents: [
+    messages: [
       {
         role: 'user',
-        parts: [
-          {
-            text: `다음은 "${topic}" 주제로 진행한 인터뷰의 transcript 다.
+        content: `다음은 "${topic}" 주제로 진행한 인터뷰의 transcript 다.
 
 ${transcript}
 
@@ -86,8 +63,6 @@ ${transcript}
 규칙:
 - 출력은 정확히 "YES" 또는 "NO" 하나만.
 - 다른 단어, 설명, 문장부호 금지.`,
-          },
-        ],
       },
     ],
   };

@@ -2,9 +2,9 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
 import { DraftsModule } from '@/drafts/drafts.module';
-import { GeminiModule } from '@/gemini/gemini.module';
 import { HealthModule } from '@/health/health.module';
 import { InterviewModule } from '@/interview/interview.module';
+import { LlmModule } from '@/llm/llm.module';
 import { SupabaseModule } from '@/supabase/supabase.module';
 import { TopicsModule } from '@/topics/topics.module';
 
@@ -18,7 +18,7 @@ import { AppService } from './app.service';
     }),
     SupabaseModule,
     HealthModule,
-    GeminiModule,
+    LlmModule,
     InterviewModule,
     TopicsModule,
     DraftsModule,
