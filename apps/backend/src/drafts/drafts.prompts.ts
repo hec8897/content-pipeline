@@ -2,7 +2,7 @@ import type { GenerateContentRequest } from '@google/generative-ai';
 
 import type { InterviewHistoryItem } from '@/interview/interview.prompts';
 
-import { PALETTE_PAIRS } from './drafts.schema';
+import { type CardNewsCard, PALETTE_PAIRS } from './drafts.schema';
 
 const SYSTEM_INSTRUCTION = `당신은 한국어로 글 쓰는 1인 콘텐츠 작가다.
 사용자가 던진 주제와 인터뷰 답변을 받아, 본인 경험이 묻어나는 자연스러운 콘텐츠를 만든다.
@@ -116,6 +116,64 @@ export function buildBlogPrompt(
       },
     ],
   };
+}
+
+// Phase 6 — 모든 카드 (cover/body/outro) 의 배경 이미지 생성.
+// 메모리 룰 [llm_content_guardrails]: transcript 외 사실 도입 금지 + 정치·종교·시사·특정 인물 회피.
+// 이미지엔 텍스트 렌더 시도 X — 텍스트는 카드 본문 layer 가 책임 (이미지는 분위기/일러스트 톤).
+export const IMAGE_GEN_SYSTEM = `당신은 한국 인스타그램 피드 톤에 어울리는 카드뉴스 배경 일러스트를 만든다.
+
+스타일 규칙:
+- 미니멀, 부드러운 색조, 추상/일러스트 톤. 사진 같은 디테일·복잡한 배경 금지.
+- 텍스트·글자·로고 절대 렌더링 금지 (텍스트는 별도 layer 가 그림 위에 얹음).
+- 사람 얼굴/식별 가능한 인물 묘사 회피. 사람이 필요하면 뒷모습·실루엣·신체 일부만.
+- 정치·종교·시사·특정 인물·집단·브랜드 묘사 회피.
+- 카드 텍스트와 분위기는 연결되되, 텍스트에 없는 사실·디테일을 시각으로 지어내지 마.
+
+레이아웃:
+- 1:1 정사각 비율, 1080×1080 가정.
+- 카드 본문 텍스트가 중앙~하단 layer 에 얹힌다는 전제 — 중앙·하단의 시각 디테일은 과하지 않게, 상단/주변부에 무게 두기.`;
+
+// Pollinations(Flux) 용 짧은 키워드 prompt — Flux 는 영어 위주, 첫 ~75 토큰만 강하게 반영,
+// 부정문 "X 금지" 가 오히려 X 를 키워드로 끌어옴. 따라서:
+//   - 토픽 / 카드 키워드를 가장 앞에 (Korean as-is — Flux 다중언어 부분 인식 활용)
+//   - 영어 스타일 디스크립터로 톤 유도
+//   - "no text, no people" 처럼 negation 은 끝에 짧게
+export function buildCardImagePromptForFlux(card: CardNewsCard, topic: string): string {
+  const title = card.title.replace(/\n/g, ' ');
+  let subject: string;
+  if (card.type === 'cover') {
+    subject = title;
+  } else if (card.type === 'outro') {
+    subject = `${title}. ${card.body.replace(/\n/g, ' ')}`;
+  } else {
+    // body 카드: title + body 합쳐 핵심 키워드 추출 (Flux 토큰 윈도우 고려해 짧게).
+    subject = `${title}. ${card.body.replace(/\n/g, ' ')}`;
+  }
+  return `${topic}. ${subject}. Minimalist pastel illustration, soft warm colors, abstract shapes, korean instagram aesthetic, square 1:1, no text, no faces.`;
+}
+
+export function buildCardImagePrompt(card: CardNewsCard, topic: string): string {
+  // user-facing 텍스트만 보냄 (transcript 전체 X — privacy + 토큰).
+  let summary: string;
+  let role: string;
+  if (card.type === 'cover') {
+    summary = `${card.title}${card.subtitle ? ` / ${card.subtitle}` : ''}${card.tag ? ` (${card.tag})` : ''}`;
+    role = '카드뉴스 표지';
+  } else if (card.type === 'outro') {
+    summary = `${card.title} — ${card.body ?? ''}${card.cta ? ` / ${card.cta}` : ''}`;
+    role = '카드뉴스 마지막 슬라이드(아웃트로)';
+  } else {
+    summary = `${card.title}${card.body ? ` — ${card.body}` : ''}`;
+    role = '카드뉴스 본문 슬라이드';
+  }
+  return `주제: "${topic}"
+
+${role} 의 배경 일러스트를 만들어줘.
+
+이 슬라이드의 텍스트 요지(시각화 단서로만 사용, 글자로 그리지 마): "${summary}"
+
+위 분위기에 맞는 1:1 배경 이미지 1장. 글자/로고/텍스트 절대 포함 금지. 사람 얼굴 회피.`;
 }
 
 export function parseBlogMarkdown(raw: string): {

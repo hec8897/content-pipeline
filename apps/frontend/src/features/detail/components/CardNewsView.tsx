@@ -1,12 +1,30 @@
 import type { CardNewsCard } from '@/types';
 
 export function CardNewsView({ card, idx }: { card: CardNewsCard; idx: number }) {
+  const hasImage = !!card.bg_image;
+  const rootStyle: React.CSSProperties = hasImage
+    ? {
+        backgroundColor: card.bg,
+        backgroundImage: `url(${card.bg_image})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        color: 'white',
+      }
+    : { background: card.bg, color: card.fg };
+
   return (
     <div
-      className="aspect-square rounded-md p-3.5 flex flex-col justify-between"
-      style={{ background: card.bg, color: card.fg }}
+      className="relative aspect-square rounded-md p-3.5 flex flex-col justify-between overflow-hidden"
+      style={rootStyle}
     >
-      <div className="flex items-start justify-between text-[10px] opacity-70 font-mono">
+      {hasImage && (
+        <div
+          aria-hidden
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: 'rgba(0,0,0,0.35)' }}
+        />
+      )}
+      <div className="relative z-10 flex items-start justify-between text-[10px] opacity-70 font-mono">
         {card.type === 'cover' ? (
           <span>{card.tag}</span>
         ) : (
@@ -14,7 +32,7 @@ export function CardNewsView({ card, idx }: { card: CardNewsCard; idx: number })
         )}
       </div>
       <div
-        className={`flex flex-col gap-1 ${
+        className={`relative z-10 flex flex-col gap-1 ${
           card.type === 'cover' || card.type === 'outro' ? 'text-center' : ''
         }`}
       >

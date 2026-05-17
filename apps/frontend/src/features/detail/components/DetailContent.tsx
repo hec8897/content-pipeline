@@ -62,7 +62,13 @@ export function DetailContent() {
       <DetailTabs
         panels={{
           overview: <DetailOverview content={content} />,
-          insta: <DetailInsta contentId={content.id} cards={draft.card_news ?? []} />,
+          insta: (
+            <DetailInsta
+              contentId={content.id}
+              topicTitle={draft.topic.title}
+              cards={draft.card_news ?? []}
+            />
+          ),
           blog: (
             <DetailBlog
               contentId={content.id}

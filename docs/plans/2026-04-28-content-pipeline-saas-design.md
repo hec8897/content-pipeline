@@ -419,17 +419,22 @@ n8n에 들어오는 트래픽은 두 종류:
 | 2     | [Phase 2 — AI 인터뷰](./2026-05-10-content-pipeline-phase-2.md)              | 완료 (#3, #4)                     |
 | 3     | [Phase 3 — AI 양산](./2026-05-12-content-pipeline-phase-3.md)                | 완료 (#5)                         |
 | 4     | [Phase 4 — 블로그 편집/미리보기](./2026-05-13-content-pipeline-phase-4.md)   | 완료 (#6)                         |
-| 5     | [Phase 5 — 대시보드/라이브러리 실데이터](./2026-05-14-content-pipeline-phase-5.md) | 진행 중                           |
-| 6     | _Phase 6 — 카드뉴스 편집/미리보기 (예정)_                                    | —                                 |
+| 5     | [Phase 5 — 대시보드/라이브러리 실데이터](./2026-05-14-content-pipeline-phase-5.md) | 완료 (#7, #8)                     |
+| 6     | [Phase 6 — 카드뉴스 편집 + AI 이미지 + PNG export](./2026-05-15-content-pipeline-phase-6.md) | 완료 (브랜치 `claude/phase-6-implementation`) |
+| 7     | [Phase 7 — LLM provider 마이그레이션 (Gemini → OpenAI)](./2026-05-16-llm-migration-openai.md) | 예정                              |
 | 1b    | _Phase 1b — 인프라 (ECS/n8n/Cloudflare, 발행 진입 직전)_                     | —                                 |
-| 7     | _Phase 7 — 발행 인프라 (큐/스케줄러/n8n webhook)_                            | —                                 |
-| 8     | _Phase 8 — 네이버 자동_                                                      | —                                 |
-| 9     | _Phase 9 — 인스타 자동_                                                      | —                                 |
-| 10    | _Phase 10 — 통합 + dogfooding_                                               | —                                 |
+| 8     | _Phase 8 — 발행 인프라 (큐/스케줄러/n8n webhook)_                            | —                                 |
+| 9     | _Phase 9 — 네이버 자동_                                                      | —                                 |
+| 10    | _Phase 10 — 인스타 자동_                                                     | —                                 |
+| 11    | _Phase 11 — 통합 + dogfooding_                                               | —                                 |
+
+> Out-of-scope backlog: [docs/backlog.md](../backlog.md) — Phase 6 진행 중 미룬 항목 (Storage 영속화 / 사진 위치 조절 / 탭 라우팅 / 캐러셀 미리보기 / 캡션 자동 생성 등) 모음.
 
 > **2026-05-13 분배 재정렬**: 기존 Phase 4(편집+미리보기) 를 새 Phase 4(블로그) + 새 Phase 5(카드뉴스) 로 쪼개고, 기존 Phase 5~8(발행 단계) 은 각각 +1 씩 뒤로 (Phase 6~9). 인프라(Phase 1b) 는 발행 진입 직전.
 >
 > **2026-05-14 분배 재정렬**: 새 Phase 5 = 대시보드/라이브러리 실데이터(딱 리스트 표기까지), 기존 Phase 5(카드뉴스 편집) → Phase 6 으로 밀고 발행 단계들(6~9) → 7~10. 인프라(1b) 위치는 그대로 — 새 Phase 6 과 새 Phase 7 사이.
+>
+> **2026-05-16 분배 재정렬**: Phase 6 마감. LLM provider 가 Gemini → OpenAI 로 일괄 교체될 가능성이 커서 발행 단계(원 Phase 7~10) 직전에 별도 phase 신설 — 새 Phase 7 = LLM 마이그레이션, 이전 발행 단계(7~10)는 +1 씩 뒤로 (8~11). 인프라(1b) 위치는 그대로 — 새 Phase 7 과 새 Phase 8 사이.
 
 > 직전 Phase 완료 후 다음 plan을 순차 작성. Phase 1a가 굳혀야 Phase 2 위에 얹을 토대가 명확해짐.
 >
@@ -484,6 +489,7 @@ n8n에 들어오는 트래픽은 두 종류:
 - **2026-05-14**: Phase 5 plan 확정. backend `GET /api/drafts` 신설 + frontend `useQuery(qk.drafts())` + `draftToContent` 어댑터(`lib/api/adapters.ts`)로 mock LIBRARY_ITEMS 제거. drafts.status → Content.state 매핑(pending/generating → processing, ready → draft, failed → failed). 필터 / 검색 / 발행큐 / hero stat 은 out — 발행 phase 묶음.
 - **2026-05-14**: Phase 5 도중 scope 확장. 상세 페이지(`/library/[id]`) lookup 도 본 phase 로 끌어옴 — 라이브러리 카드 클릭 시 mock LIBRARY_ITEMS.find 로 404 떨어지는 문제 회피. 페이지를 client component 로 변환 + DetailInsta/DetailBlog 가 card_news / blog_title·body·tags prop 으로 직접 받음. DetailOverview 의 인터뷰 영역과 DetailActivity 는 그대로 mock(다음 phase 또는 발행 phase).
 - **2026-05-14**: Phase 5 도중 scope 확장 #2. 편집 라우트를 `?mode=blog` 쿼리에서 `/edit/[mode]` dynamic segment 로 전환 + mock 폐기 + 실데이터 autosave 연결. `/new/edit` 의 DraftEditor autosave 패턴(800ms debounce, pending flag, beforeunload) 을 단일 mode 로 축약 재사용. 기존 `BlogEditPanel.tsx` / `[id]/edit/page.tsx` 폐기, `routes.libraryItemEdit(id, mode)` 의 mode 인자 required 화. 저장 후 `qk.drafts()` 리스트 캐시의 해당 row 만 갱신.
+- **2026-05-16**: Phase 6 마감. CardNewsEditor 텍스트 갭(cover tag / outro cta / 카드 추가 type dropdown) + features/insta-export (1080 캡처 컴포넌트 + html-to-image + jszip PNG zip 헤더 actions 다운로드) + 모든 카드(cover/body/outro)에 AI 재생성(stub / pollinations / gemini 3-mode env) + 로컬 업로드(FileReader → data URL, in-memory) + 이미지 제거 토글. backend zod 를 양산용 cardNewsSchema(tuple, LLM 출력 검증)와 편집용 cardNewsEditSchema(array max 8 / bg·fg 자유 hex regex) 로 분리 — 편집 단계 자유도 확보 + autosave 400 루프 해소. CardNewsEditor 모듈화(566 → 본체 ~200줄 + 5 자식 컴포넌트 + presets, CardNewsEditor/ 폴더 구조). 인스타 swipe 캐러셀 / 사진 위치 조절 / Storage 영속화는 [backlog](../backlog.md) 로 미룸. 작업 브랜치 `claude/phase-6-implementation`, 9 commits.
 
 ---
 

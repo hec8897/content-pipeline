@@ -21,4 +21,14 @@ export const draftsApi = {
     const res = await api.patch<Draft>(`/drafts/${draftId}`, payload);
     return res.data;
   },
+
+  async regenerateCardImage(
+    draftId: string,
+    cardIndex: number,
+  ): Promise<{ imageBase64: string }> {
+    const res = await api.post<{ imageBase64: string }>(
+      `/drafts/${draftId}/cards/${cardIndex}/regenerate-image`,
+    );
+    return res.data;
+  },
 };

@@ -12,7 +12,14 @@ import type { InterviewHistoryItem } from '@/interview/interview.prompts';
 import type { Database } from '@/supabase/database.types';
 import { SupabaseService } from '@/supabase/supabase.service';
 
-import { buildBlogPrompt, buildCardNewsPrompt, parseBlogMarkdown } from './drafts.prompts';
+import {
+  IMAGE_GEN_SYSTEM,
+  buildBlogPrompt,
+  buildCardImagePrompt,
+  buildCardImagePromptForFlux,
+  buildCardNewsPrompt,
+  parseBlogMarkdown,
+} from './drafts.prompts';
 import {
   type CardNews,
   cardNewsSchema,
@@ -106,6 +113,35 @@ export class DraftsService {
       await this.markFailed(draft.id, message);
       throw new ServiceUnavailableException(`양산에 실패했어요. 잠시 후 다시 시도해주세요.`);
     }
+  }
+
+  // Phase 6 — 모든 카드 AI 배경 이미지 재생성 허용. 응답은 클라 in-memory 만 (DB 저장 X).
+  async regenerateCardImage(
+    draftId: string,
+    userId: string,
+    cardIndex: number,
+  ): Promise<{ imageBase64: string }> {
+    const draft = await this.loadOwnedDraft(draftId, userId);
+    if (draft.status !== 'ready') {
+      throw new BadRequestException('Draft is not ready');
+    }
+
+    const cards = draft.card_news as CardNews | null;
+    if (!cards || !Array.isArray(cards)) {
+      throw new BadRequestException('Draft has no card_news');
+    }
+    if (cardIndex < 0 || cardIndex >= cards.length) {
+      throw new BadRequestException(`cardIndex ${cardIndex} out of range`);
+    }
+    const card = cards[cardIndex];
+
+    const topic = await this.loadOwnedTopic(draft.topic_id, userId);
+    const { imageBase64 } = await this.gemini.generateImage({
+      geminiPrompt: buildCardImagePrompt(card, topic.title),
+      geminiSystemInstruction: IMAGE_GEN_SYSTEM,
+      fluxPrompt: buildCardImagePromptForFlux(card, topic.title),
+    });
+    return { imageBase64 };
   }
 
   async patch(draftId: string, userId: string, payload: unknown): Promise<DraftRow> {

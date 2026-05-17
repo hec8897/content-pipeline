@@ -37,6 +37,9 @@ export type CardNewsCard = {
   cta?: string;
   bg: string;
   fg: string;
+  // Phase 6 — AI 재생성 결과 data URL. 클라 in-memory only.
+  // fromEditorCards 가 strip 해 DB/API 로는 흐르지 않음.
+  bg_image?: string;
 };
 
 export type InterviewQA = {

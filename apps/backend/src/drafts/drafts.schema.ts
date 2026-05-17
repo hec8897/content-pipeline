@@ -55,6 +55,7 @@ const outroCardSchema = z.object({
   fg: fgEnum,
 });
 
+// 양산(generate) 단계 — LLM 출력 검증. 정확히 cover + body01~06 + outro 8장 tuple.
 export const cardNewsSchema = z.tuple([
   coverCardSchema,
   makeBodyCardSchema('01'),
@@ -69,9 +70,44 @@ export const cardNewsSchema = z.tuple([
 export type CardNews = z.infer<typeof cardNewsSchema>;
 export type CardNewsCard = CardNews[number];
 
+// 편집(PATCH) 단계 — 카드 수 자유 (max 8) + bg/fg 도 자유 hex/색이름 (color picker
+// 와 8번째 preset, 사용자 custom 컬러 허용). 양산용 cardNewsSchema 의 bg/fg enum 은
+// LLM 출력 검증으로 그대로 유지.
+const editColor = z.string().regex(/^(#[0-9a-fA-F]{3,8}|[a-zA-Z]+)$/, 'invalid color');
+
+const editCoverSchema = z.object({
+  type: z.literal('cover'),
+  title: z.string().min(1).max(80),
+  subtitle: z.string().min(1).max(80).optional(),
+  tag: z.string().min(1).max(40).optional(),
+  bg: editColor,
+  fg: editColor,
+});
+const editBodySchema = z.object({
+  type: z.literal('body'),
+  num: z.string().min(1).max(4).optional(),
+  title: z.string().min(1).max(80),
+  body: z.string().min(1).max(200),
+  bg: editColor,
+  fg: editColor,
+});
+const editOutroSchema = z.object({
+  type: z.literal('outro'),
+  title: z.string().min(1).max(80),
+  body: z.string().min(1).max(200),
+  cta: z.string().min(1).max(60).optional(),
+  bg: editColor,
+  fg: editColor,
+});
+
+const cardNewsEditSchema = z
+  .array(z.discriminatedUnion('type', [editCoverSchema, editBodySchema, editOutroSchema]))
+  .min(1)
+  .max(8);
+
 export const patchDraftSchema = z
   .object({
-    card_news: cardNewsSchema.optional(),
+    card_news: cardNewsEditSchema.optional(),
     blog_title: z.string().min(1).max(200).optional(),
     blog_body: z.string().min(1).max(10_000).optional(),
     blog_tags: z.array(z.string().min(1).max(40)).max(10).optional(),

@@ -154,7 +154,11 @@ function Editor({ draft, mode }: { draft: DraftListItem; mode: EditMode }) {
           onTagsChange={autosave.setBlogTags}
         />
       ) : (
-        <CardNewsEditor initial={autosave.initialCards} onChange={autosave.setCards} />
+        <CardNewsEditor
+          draftId={draft.id}
+          initial={autosave.initialCards}
+          onChange={autosave.setCards}
+        />
       )}
     </>
   );
