@@ -263,7 +263,7 @@ export const ACTIVITY_LOG: ActivityEvent[] = [
   {
     ts: '2026.05.07 14:32:24',
     tag: 'ai',
-    note: '카드뉴스 8장 생성 (gemini-2.5-flash, 47s)',
+    note: '카드뉴스 8장 생성 (gpt-5, 47s)',
     state: 'ok',
   },
   { ts: '2026.05.07 14:32:51', tag: 'ai', note: '블로그 본문 생성 (1487자)', state: 'ok' },
