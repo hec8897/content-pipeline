@@ -19,7 +19,7 @@ const STEP_INTERVAL_MS = 8000;
 const LOG_LINES = [
   '[ai] 인터뷰 답변 정리',
   '[ai] 핵심 메시지 추출',
-  '[ai] 카드뉴스 8장 생성 — gemini-2.5-flash',
+  '[ai] 카드뉴스 8장 생성 — gpt-5',
   '[ai] 블로그 본문 작성 (~1500자)',
   '[done] 양산 완료. 편집 화면으로 이동합니다.',
 ];

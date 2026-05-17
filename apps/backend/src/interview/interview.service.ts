@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 
-import { GeminiService } from '@/gemini/gemini.service';
+import { LlmService } from '@/llm/llm.service';
 import type { Database } from '@/supabase/database.types';
 import { SupabaseService } from '@/supabase/supabase.service';
 
@@ -52,7 +52,7 @@ export type AnswerResult =
 export class InterviewService {
   constructor(
     private readonly supabase: SupabaseService,
-    private readonly gemini: GeminiService,
+    private readonly llm: LlmService,
   ) {}
 
   async getStateForTopic(topicId: string, userId: string): Promise<TopicState> {
@@ -355,7 +355,7 @@ export class InterviewService {
   }
 
   private async createFirstQuestion(sessionId: string, topicTitle: string): Promise<MessageRow> {
-    const text = await this.gemini.generateText(buildFirstQuestionPrompt(topicTitle));
+    const text = await this.llm.generateText(buildFirstQuestionPrompt(topicTitle));
     return this.insertMessage(sessionId, 1, 'assistant', text);
   }
 
@@ -365,7 +365,7 @@ export class InterviewService {
     history: InterviewHistoryItem[],
     turn: number,
   ): Promise<MessageRow> {
-    const text = await this.gemini.generateText(buildNextQuestionPrompt(topicTitle, history));
+    const text = await this.llm.generateText(buildNextQuestionPrompt(topicTitle, history));
     return this.insertMessage(sessionId, turn, 'assistant', text);
   }
 
@@ -373,7 +373,7 @@ export class InterviewService {
     topicTitle: string,
     history: InterviewHistoryItem[],
   ): Promise<'enough' | 'more'> {
-    const raw = await this.gemini.generateText(buildEnoughJudgePrompt(topicTitle, history));
+    const raw = await this.llm.generateText(buildEnoughJudgePrompt(topicTitle, history));
     return parseEnoughJudgement(raw);
   }
 }

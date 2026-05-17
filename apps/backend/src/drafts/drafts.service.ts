@@ -7,8 +7,8 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 
-import { GeminiService } from '@/gemini/gemini.service';
 import type { InterviewHistoryItem } from '@/interview/interview.prompts';
+import { LlmService } from '@/llm/llm.service';
 import type { Database } from '@/supabase/database.types';
 import { SupabaseService } from '@/supabase/supabase.service';
 
@@ -16,7 +16,6 @@ import {
   IMAGE_GEN_SYSTEM,
   buildBlogPrompt,
   buildCardImagePrompt,
-  buildCardImagePromptForFlux,
   buildCardNewsPrompt,
   parseBlogMarkdown,
 } from './drafts.prompts';
@@ -43,7 +42,7 @@ export class DraftsService {
 
   constructor(
     private readonly supabase: SupabaseService,
-    private readonly gemini: GeminiService,
+    private readonly llm: LlmService,
   ) {}
 
   async getForTopic(topicId: string, userId: string): Promise<DraftState> {
@@ -82,12 +81,17 @@ export class DraftsService {
     const draft = await this.upsertGenerating(topicId, userId);
 
     try {
-      const cardResult = await this.gemini.generateValidated(
+      const cardResult = await this.llm.generateValidated(
         buildCardNewsPrompt(topic.title, history),
-        (raw) => cardNewsSchema.parse(JSON.parse(raw)),
+        (raw) => {
+          // jsonMode 라 LLM 응답은 { cards: [...] } object. cards 필드 추출 후 tuple 검증.
+          const parsed = JSON.parse(raw) as { cards?: unknown };
+          if (!parsed.cards) throw new Error('missing cards field in LLM response');
+          return cardNewsSchema.parse(parsed.cards);
+        },
       );
 
-      const blogResult = await this.gemini.generateValidated(
+      const blogResult = await this.llm.generateValidated(
         buildBlogPrompt(topic.title, history),
         (raw): ReturnType<typeof parseBlogMarkdown> => {
           const parsed = parseBlogMarkdown(raw);
@@ -136,11 +140,8 @@ export class DraftsService {
     const card = cards[cardIndex];
 
     const topic = await this.loadOwnedTopic(draft.topic_id, userId);
-    const { imageBase64 } = await this.gemini.generateImage({
-      geminiPrompt: buildCardImagePrompt(card, topic.title),
-      geminiSystemInstruction: IMAGE_GEN_SYSTEM,
-      fluxPrompt: buildCardImagePromptForFlux(card, topic.title),
-    });
+    const fullPrompt = `${IMAGE_GEN_SYSTEM}\n\n---\n\n${buildCardImagePrompt(card, topic.title)}`;
+    const { imageBase64 } = await this.llm.generateImage({ prompt: fullPrompt });
     return { imageBase64 };
   }
 

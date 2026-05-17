@@ -1,6 +1,5 @@
-import type { GenerateContentRequest } from '@google/generative-ai';
-
 import type { InterviewHistoryItem } from '@/interview/interview.prompts';
+import type { LlmRequest } from '@/llm/types';
 
 import { type CardNewsCard, PALETTE_PAIRS } from './drafts.schema';
 
@@ -41,28 +40,21 @@ function buildInputBlock(topic: string, history: InterviewHistoryItem[]): string
 ${transcript.length > 0 ? transcript : '(사용자가 인터뷰를 스킵했음 — 주제만 보고 작성)'}`;
 }
 
-export function buildCardNewsPrompt(
-  topic: string,
-  history: InterviewHistoryItem[],
-): GenerateContentRequest {
+export function buildCardNewsPrompt(topic: string, history: InterviewHistoryItem[]): LlmRequest {
   return {
-    systemInstruction: { role: 'system', parts: [{ text: SYSTEM_INSTRUCTION }] },
-    generationConfig: {
-      responseMimeType: 'application/json',
-      temperature: 0.7,
-    },
-    contents: [
+    system: SYSTEM_INSTRUCTION,
+    temperature: 0.7,
+    jsonMode: true,
+    messages: [
       {
         role: 'user',
-        parts: [
-          {
-            text: `${buildInputBlock(topic, history)}
+        content: `${buildInputBlock(topic, history)}
 
 위 인풋을 바탕으로 인스타 카드뉴스 8장을 만들어줘.
 
-출력은 JSON 배열, 정확히 8개 요소. 그 외 어떤 텍스트도 출력하지 마.
+출력은 JSON 객체 한 개. "cards" 라는 단일 키, 그 값이 정확히 8개 요소 배열.
 
-배열 구성 (인덱스 = 슬라이드 번호):
+cards 배열 구성 (인덱스 = 슬라이드 번호):
 - [0] 표지: { "type": "cover", "title": string, "subtitle"?: string, "tag"?: string, "bg": string, "fg": string }
 - [1..6] 본문 6장: { "type": "body", "num": "01"~"06" (인덱스 그대로), "title": string, "body": string, "bg": string, "fg": string }
 - [7] 아웃트로: { "type": "outro", "title": string, "body": string, "cta"?: string, "bg": string, "fg": string }
@@ -76,27 +68,20 @@ export function buildCardNewsPrompt(
 bg/fg 는 아래 7쌍 중 하나만 페어 단위로 골라 (다른 hex 절대 금지):
 ${PALETTE_HINT}
 
-설명, 코드 펜스, 헤더 일체 금지. 첫 글자는 [, 마지막 글자는 ].`,
-          },
-        ],
+설명, 코드 펜스, 헤더 일체 금지.`,
       },
     ],
   };
 }
 
-export function buildBlogPrompt(
-  topic: string,
-  history: InterviewHistoryItem[],
-): GenerateContentRequest {
+export function buildBlogPrompt(topic: string, history: InterviewHistoryItem[]): LlmRequest {
   return {
-    systemInstruction: { role: 'system', parts: [{ text: SYSTEM_INSTRUCTION }] },
-    generationConfig: { temperature: 0.7 },
-    contents: [
+    system: SYSTEM_INSTRUCTION,
+    temperature: 0.7,
+    messages: [
       {
         role: 'user',
-        parts: [
-          {
-            text: `${buildInputBlock(topic, history)}
+        content: `${buildInputBlock(topic, history)}
 
 위 인풋으로 네이버 블로그 글 한 편을 마크다운으로 써줘.
 
@@ -111,8 +96,6 @@ export function buildBlogPrompt(
 - transcript 의 디테일을 그대로 인용하거나 살짝 다듬어 본문에 녹여.
 
 마크다운만 출력. JSON, 설명, 본문 안에 별도 "TAGS:" 줄 (마지막 1줄 외) 일체 금지.`,
-          },
-        ],
       },
     ],
   };
@@ -133,25 +116,6 @@ export const IMAGE_GEN_SYSTEM = `당신은 한국 인스타그램 피드 톤에 
 레이아웃:
 - 1:1 정사각 비율, 1080×1080 가정.
 - 카드 본문 텍스트가 중앙~하단 layer 에 얹힌다는 전제 — 중앙·하단의 시각 디테일은 과하지 않게, 상단/주변부에 무게 두기.`;
-
-// Pollinations(Flux) 용 짧은 키워드 prompt — Flux 는 영어 위주, 첫 ~75 토큰만 강하게 반영,
-// 부정문 "X 금지" 가 오히려 X 를 키워드로 끌어옴. 따라서:
-//   - 토픽 / 카드 키워드를 가장 앞에 (Korean as-is — Flux 다중언어 부분 인식 활용)
-//   - 영어 스타일 디스크립터로 톤 유도
-//   - "no text, no people" 처럼 negation 은 끝에 짧게
-export function buildCardImagePromptForFlux(card: CardNewsCard, topic: string): string {
-  const title = card.title.replace(/\n/g, ' ');
-  let subject: string;
-  if (card.type === 'cover') {
-    subject = title;
-  } else if (card.type === 'outro') {
-    subject = `${title}. ${card.body.replace(/\n/g, ' ')}`;
-  } else {
-    // body 카드: title + body 합쳐 핵심 키워드 추출 (Flux 토큰 윈도우 고려해 짧게).
-    subject = `${title}. ${card.body.replace(/\n/g, ' ')}`;
-  }
-  return `${topic}. ${subject}. Minimalist pastel illustration, soft warm colors, abstract shapes, korean instagram aesthetic, square 1:1, no text, no faces.`;
-}
 
 export function buildCardImagePrompt(card: CardNewsCard, topic: string): string {
   // user-facing 텍스트만 보냄 (transcript 전체 X — privacy + 토큰).

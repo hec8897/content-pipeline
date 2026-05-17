@@ -63,8 +63,8 @@ Turborepo 태스크 파이프라인 (`turbo.json`):
 - **DB**: content-pipeline 전용 Supabase Postgres. n8n 영속은 같은 DB 의 별도 `n8n` schema + `n8n_runner` role.
 - **배포**: ECS Fargate + ECR, 단일 VPC public subnet only (NAT 없음). `n8n.<도메인>` UI 는 Cloudflare Access (Zero Trust) 게이트, `/webhook/*` 는 public + 백엔드 HMAC 시그니처.
 - **CI/CD**: GitHub Actions OIDC → ECR push → `aws ecs update-service --force-new-deployment`.
-- **AI**: `@google/generative-ai` SDK, `gemini-2.5-flash` 메인 + 폴백 체인 (`2.5-flash-lite → 2.0-flash → 2.0-flash-lite`).
-- **로컬 개발**: `apps/backend/.env` + `apps/frontend/.env.local` 에 cp 전용 Supabase 신규 프로젝트의 `SUPABASE_URL` / `SUPABASE_ANON_KEY` (= `sb_publishable_*`) / `SUPABASE_SERVICE_ROLE_KEY` (= `sb_secret_*`) 가 필요. 백엔드 `.env` 에는 추가로 `GEMINI_API_KEY` (Google AI Studio) 필요. 각 패키지의 `.env(.local).example` 참고. 마이그레이션은 `supabase/migrations/` 디렉토리 하에 raw SQL 로 관리, Dashboard SQL Editor 또는 MCP `apply_migration` 으로 적용.
+- **AI**: `openai` SDK, 텍스트 `gpt-5` 메인 + `gpt-5-mini` 폴백, 이미지 `gpt-image-1` (medium, 1024×1024).
+- **로컬 개발**: `apps/backend/.env` + `apps/frontend/.env.local` 에 cp 전용 Supabase 신규 프로젝트의 `SUPABASE_URL` / `SUPABASE_ANON_KEY` (= `sb_publishable_*`) / `SUPABASE_SERVICE_ROLE_KEY` (= `sb_secret_*`) 가 필요. 백엔드 `.env` 에는 추가로 `OPENAI_API_KEY` (platform.openai.com) 필요. 각 패키지의 `.env(.local).example` 참고. 마이그레이션은 `supabase/migrations/` 디렉토리 하에 raw SQL 로 관리, Dashboard SQL Editor 또는 MCP `apply_migration` 으로 적용.
 
 ## 컨벤션
 
