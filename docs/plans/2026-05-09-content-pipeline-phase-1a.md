@@ -11,11 +11,12 @@
 ## 사전 작업
 
 - Supabase 신규 프로젝트 `content-pipeline` 생성 (Seoul region)
-- Supabase Auth Providers → GitHub 활성화 (GitHub OAuth App 발급 필요)
+- Supabase Auth Providers → Google 활성화 (Google Cloud OAuth 2.0 Client ID 발급 필요)
 - Supabase Auth Redirect URLs 에 `http://localhost:3000/auth/callback` 추가
 - `apps/backend/.env` + `apps/frontend/.env.local` 작성 (`.env.example`도 같이 커밋)
 
 환경 변수:
+
 - backend: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `FRONTEND_URL=http://localhost:3000`, `PORT=3001`
 - frontend: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
@@ -40,16 +41,15 @@
 - `database.types.ts`는 빈 placeholder (Phase 2에서 자동 생성으로 교체)
 - `AppModule`에 `ConfigModule.forRoot({ isGlobal: true })` + `SupabaseModule` 추가
 
-## Task 4 — Backend SupabaseAuthGuard (TDD)
+## Task 4 — Backend SupabaseAuthGuard
 
 - 베끼기: `toy-monorepo/apps/devjournal/backend/src/auth/supabase-auth.guard.ts`
-- spec 새로 작성 — Bearer 헤더 / `?token=` 쿼리 / 토큰 없음 / 검증 실패 4 케이스
-- 테스트 통과 확인
+- 테스트 코드는 작성하지 않음 (토큰 관리 — 후속 사이클로 보류)
 
 ## Task 5 — Backend HealthController
 
 - public `GET /api/health` → `{ status: 'ok', timestamp }`
-- spec 1개
+- 테스트 코드는 작성하지 않음
 
 ## Task 6 — Backend main.ts 정비
 
@@ -69,8 +69,11 @@
 
 ## Task 9 — Frontend Login + Callback
 
-- `src/app/(auth)/layout.tsx` (centered)
-- `src/app/(auth)/login/page.tsx` — GitHub OAuth 버튼 (devjournal `LoginPageView` 참고)
+- 디자인 출처 = `claude_design/design_handoff_content_pipeline 2/design_files/login.html` (좌측 폼 + 우측 파이프라인 비주얼 패널 + 하단 라이브 티커). Tailwind v4 + 디자인 토큰(`bg`/`surface`/`text`/`border`/`accent` 등)으로 옮김.
+- 인증 백엔드는 **Supabase Auth (Google OAuth) 유지** — 핸드오프의 NextAuth.js 권장은 무시.
+- 이메일/비밀번호 폼은 **시각적 placeholder** (실 동작 X), Google 버튼만 `supabase.auth.signInWithOAuth({ provider: 'google' })` 연결.
+- `src/app/(auth)/layout.tsx` — 풀 뷰포트 (centered grid 비활성, 좌우 2-pane)
+- `src/app/(auth)/login/page.tsx` — 'use client', `useSupabase` 사용
 - `src/app/auth/callback/route.ts` — code → session 교환 후 `/` 리다이렉트, 실패 시 `/login?error=`
 
 ## Task 10 — Frontend AuthGuard
@@ -83,7 +86,7 @@
 `pnpm dev` → 브라우저:
 
 1. 시크릿 창으로 `localhost:3000` → `/login` 리다이렉트 ✓
-2. GitHub 로그인 → `/auth/callback` → `/` 진입, 사이드바 보임 ✓
+2. Google 로그인 → `/auth/callback` → `/` 진입, 사이드바 보임 ✓
 3. Supabase Dashboard → Authentication → Users 에 1행 추가 ✓
 4. `curl localhost:3001/api/health` → 200 ✓
 
@@ -96,7 +99,7 @@
 
 ## 완료 기준
 
-- type-check + test 모두 pass
+- type-check pass (test 신규 작성은 본 phase 스코프 외 — 토큰 관리)
 - `pnpm dev` 로 둘 다 기동 + Health 200
 - GitHub 로그인 → 보호 라우트 진입까지 한 번 성공
 - 호스티드 Supabase에 `pgcrypto` 활성화

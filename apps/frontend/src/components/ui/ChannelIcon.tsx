@@ -1,4 +1,4 @@
-import type { Channel } from "@/lib/types";
+import type { Channel } from '@/types';
 
 type Props = {
   channel: Channel;
@@ -13,7 +13,7 @@ export function ChannelIcon({ channel, size = 22 }: Props) {
     flexShrink: 0,
   };
 
-  if (channel === "naver") {
+  if (channel === 'naver') {
     return (
       <span
         style={style}
@@ -28,8 +28,7 @@ export function ChannelIcon({ channel, size = 22 }: Props) {
     <span
       style={{
         ...style,
-        background:
-          "linear-gradient(135deg, #f58529 0%, #dd2a7b 50%, #8134af 100%)",
+        background: 'linear-gradient(135deg, #f58529 0%, #dd2a7b 50%, #8134af 100%)',
       }}
       className="rounded inline-flex items-center justify-center font-bold text-white"
     >

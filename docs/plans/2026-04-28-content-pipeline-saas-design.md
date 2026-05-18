@@ -379,19 +379,19 @@ n8n에 들어오는 트래픽은 두 종류:
 
 ## 7. 기술 스택 결정 (확정)
 
-| 영역              | 결정                                                                                                                               |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| **앱 위치**       | `/` (루트)                                                                                                                          |
-| **MVP 스코프**    | **Solid+ MVP** (Tistory 제외 변형) — n8n 자동 발행 (네이버+인스타) + 스케줄러, 예상 17~22일                                        |
-| **AI LLM**        | `gemini-2.5-flash` 메인 + 폴백 체인 (`2.5-flash-lite` → `2.0-flash` → `2.0-flash-lite`)                                            |
-| **AI Embedding**  | `gemini-embedding-001` (768dim) — 추후 콘텐츠 유사도/검색 확장 시 활용                                                             |
-| **AI SDK**        | `@google/generative-ai`                                                                                                             |
-| **백엔드**        | NestJS                                                                                                                              |
-| **프론트엔드**    | Next.js App Router                                                                                                                  |
-| **DB**            | Supabase — content-pipeline 전용 프로젝트. auth.users / RLS / 마이그레이션 모두 독립                                               |
-| **카드뉴스 렌더** | HTML → Image (Puppeteer 또는 Satori), 단색 배경 + 큰 타이포                                                                        |
-| **인증**          | Supabase Auth + `SupabaseAuthGuard`                                                                                                 |
-| **결제**          | Lean MVP out-of-scope. 3차 이후 Toss Payments 우선 검토                                                                            |
+| 영역              | 결정                                                                                        |
+| ----------------- | ------------------------------------------------------------------------------------------- |
+| **앱 위치**       | `/` (루트)                                                                                  |
+| **MVP 스코프**    | **Solid+ MVP** (Tistory 제외 변형) — n8n 자동 발행 (네이버+인스타) + 스케줄러, 예상 17~22일 |
+| **AI LLM**        | `gemini-2.5-flash` 메인 + 폴백 체인 (`2.5-flash-lite` → `2.0-flash` → `2.0-flash-lite`)     |
+| **AI Embedding**  | `gemini-embedding-001` (768dim) — 추후 콘텐츠 유사도/검색 확장 시 활용                      |
+| **AI SDK**        | `@google/generative-ai`                                                                     |
+| **백엔드**        | NestJS                                                                                      |
+| **프론트엔드**    | Next.js App Router                                                                          |
+| **DB**            | Supabase — content-pipeline 전용 프로젝트. auth.users / RLS / 마이그레이션 모두 독립        |
+| **카드뉴스 렌더** | HTML → Image (Puppeteer 또는 Satori), 단색 배경 + 큰 타이포                                 |
+| **인증**          | Supabase Auth + `SupabaseAuthGuard`                                                         |
+| **결제**          | Lean MVP out-of-scope. 3차 이후 Toss Payments 우선 검토                                     |
 
 ## 7.5. plan 단계 / 후속 사이클로 미룬 결정
 
@@ -413,9 +413,28 @@ n8n에 들어오는 트래픽은 두 종류:
 
 ## 8. Plans
 
-| Phase | Plan                                                                | 상태                 |
-| ----- | ------------------------------------------------------------------- | -------------------- |
-| 1a    | [Phase 1a — 인증 기반](./2026-05-09-content-pipeline-phase-1a.md) | 작성 완료, 실행 대기 |
+| Phase | Plan                                                                         | 상태                              |
+| ----- | ---------------------------------------------------------------------------- | --------------------------------- |
+| 1a    | [Phase 1a — 인증 기반](./2026-05-09-content-pipeline-phase-1a.md)            | 완료 (#1)                         |
+| 2     | [Phase 2 — AI 인터뷰](./2026-05-10-content-pipeline-phase-2.md)              | 완료 (#3, #4)                     |
+| 3     | [Phase 3 — AI 양산](./2026-05-12-content-pipeline-phase-3.md)                | 완료 (#5)                         |
+| 4     | [Phase 4 — 블로그 편집/미리보기](./2026-05-13-content-pipeline-phase-4.md)   | 완료 (#6)                         |
+| 5     | [Phase 5 — 대시보드/라이브러리 실데이터](./2026-05-14-content-pipeline-phase-5.md) | 완료 (#7, #8)                     |
+| 6     | [Phase 6 — 카드뉴스 편집 + AI 이미지 + PNG export](./2026-05-15-content-pipeline-phase-6.md) | 완료 (브랜치 `claude/phase-6-implementation`) |
+| 7     | [Phase 7 — LLM provider 마이그레이션 (Gemini → OpenAI)](./2026-05-16-llm-migration-openai.md) | 완료 (브랜치 `claude/phase-7-llm-migration`) |
+| 1b    | [Phase 1b — 인프라 (Vercel + ECS + n8n + Cloudflare Access)](./2026-05-17-content-pipeline-phase-1b.md) | 예정                              |
+| 8     | _Phase 8 — 발행 인프라 (큐/스케줄러/n8n webhook)_                            | —                                 |
+| 9     | _Phase 9 — 네이버 자동_                                                      | —                                 |
+| 10    | _Phase 10 — 인스타 자동_                                                     | —                                 |
+| 11    | _Phase 11 — 통합 + dogfooding_                                               | —                                 |
+
+> Out-of-scope backlog: [docs/backlog.md](../backlog.md) — Phase 6 진행 중 미룬 항목 (Storage 영속화 / 사진 위치 조절 / 탭 라우팅 / 캐러셀 미리보기 / 캡션 자동 생성 등) 모음.
+
+> **2026-05-13 분배 재정렬**: 기존 Phase 4(편집+미리보기) 를 새 Phase 4(블로그) + 새 Phase 5(카드뉴스) 로 쪼개고, 기존 Phase 5~8(발행 단계) 은 각각 +1 씩 뒤로 (Phase 6~9). 인프라(Phase 1b) 는 발행 진입 직전.
+>
+> **2026-05-14 분배 재정렬**: 새 Phase 5 = 대시보드/라이브러리 실데이터(딱 리스트 표기까지), 기존 Phase 5(카드뉴스 편집) → Phase 6 으로 밀고 발행 단계들(6~9) → 7~10. 인프라(1b) 위치는 그대로 — 새 Phase 6 과 새 Phase 7 사이.
+>
+> **2026-05-16 분배 재정렬**: Phase 6 마감. LLM provider 가 Gemini → OpenAI 로 일괄 교체될 가능성이 커서 발행 단계(원 Phase 7~10) 직전에 별도 phase 신설 — 새 Phase 7 = LLM 마이그레이션, 이전 발행 단계(7~10)는 +1 씩 뒤로 (8~11). 인프라(1b) 위치는 그대로 — 새 Phase 7 과 새 Phase 8 사이.
 
 > 직전 Phase 완료 후 다음 plan을 순차 작성. Phase 1a가 굳혀야 Phase 2 위에 얹을 토대가 명확해짐.
 >
@@ -460,6 +479,19 @@ n8n에 들어오는 트래픽은 두 종류:
 - **2026-05-09**: **Phase 분배 재정렬** — 원래 Phase 1(기반)을 **1a(인증, 로컬)** + **1b(인프라, 클라우드)** 로 분리하고 1b를 Phase 4 다음으로 지연. 사유: Phase 2~4(인터뷰/양산/편집)는 로컬 + 호스티드 Supabase + Gemini API 만으로 dogfooding 가능. AWS ECS / n8n self-host / Cloudflare Access 셋업은 dogfooding 가치가 충분히 쌓인 후로 미뤄 초반 인프라 부담을 줄임. 발행(Phase 5~7)은 클라우드 인프라가 필수라 1b 다음에 위치.
 - **2026-05-09**: **레포 구조 변경** — content-pipeline 을 `toy-monorepo` 안의 `apps/content-pipeline/`이 아니라 **별도 레포 `/Users/dawoon/Desktop/dev/content-pipeline`** (pnpm + turborepo) 로 분리. 사유: 일반 SaaS 출시 대상이라 toy 성격 레포에서 분리 필요. 영향 — 2026-05-01 Phase 1 plan 폐기, 신규 plan은 본 레포의 `docs/plans/` 에 작성
 - **2026-05-09**: **모바일 앱 확장 시 인증 재사용** — 추후 iOS/Android 또는 RN/Flutter 앱으로 확장하더라도 **Supabase Auth SDK 그대로 재활용** (Firebase Auth 도입 X). 사유: 두 인증 시스템 병행 시 사용자 매핑 / RLS 분기 비용이 큼. 푸시 알림이 필요해도 FCM 은 device token 기반이라 Auth 와 독립 — Firebase 프로젝트는 FCM sender 용도로만 사용 가능
+- **2026-05-10**: Phase 2 plan 확정. 도메인 = `topics` / `interview_sessions` / `interview_messages` 3 테이블 + RLS. `(topic_id) where status='active'` partial unique 로 active session 단일성, `(session_id, turn, role)` unique 로 같은 turn = assistant Q + user A 한 쌍 강제. backend 는 admin(service-role) 로 RLS 우회 + controller 단 ownership 직접 확인 (`NotFound` vs `Forbidden` 분리). AI 인터뷰 상태머신 = MIN(3) ≤ N < MAX(8) 구간만 enough judge LLM 호출 (비용 최적화), MAX 도달 시 judge 없이 `max_reached` 강제 종료. Gemini 호출은 인터뷰어 / judge 별도 — 페르소나 `systemInstruction` (자연어 질문) vs YES/NO 강제 출력으로 역할 분리
+- **2026-05-11**: 프론트엔드 API 레이어 도구 = **axios + TanStack Query** 채택. axios instance 의 request interceptor 가 `createBrowserSupabaseClient()` 싱글톤에서 직접 token 조회 → 페이지/훅에서 `supabase` 인자 전파 제거. TanStack Query 는 Phase 3 의 refresh hydrate / 목록 캐싱 / mutation invalidation 자리 선점 (본 Phase 는 mutation-only 라 `useMutation` 마이그레이션은 Phase 3 와 함께 일괄). 후보 — 모듈 레벨 `setAccessTokenGetter` 패턴은 SupabaseProvider mount 순서 의존 race 우려로 폐기, fetch 직접 사용은 인터셉터 확장성 부족으로 폐기
+- **2026-05-11**: Supabase API 키 = **publishable / secret 시스템 (`sb_publishable_*` / `sb_secret_*`)** 채택. legacy anon/service_role JWT 키가 신규 프로젝트에서 signature reject 되는 케이스 → 새 시스템으로 전환. 코드 변경 없이 env 값만 교체 (변수 이름은 기존 `SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY` 유지 — 향후 별도 리네임 PR 후보)
+- **2026-05-12**: Phase 3 plan 확정. 양산 = sync 단일 POST + Gemini 2회 호출(카드 JSON / 블로그 마크다운), `drafts` 1 topic : 1 row(regenerate replaces). 카드 HTML→Image 렌더는 Phase 7(인스타 발행) 로 이관 — `/new/edit` 가 JSON 으로 직접 렌더, 이미지 자산은 발행 시점에만 필요. 색상 팔레트 7쌍 화이트리스트로 LLM 출력 컨트롤. zod ^4.4.3 backend dep 추가 (LLM JSON 검증 + class-validator deep tuple 약점 보완).
+- **2026-05-13**: **Phase 분배 재정렬**. 기존 Phase 4(편집+미리보기) 를 둘로 쪼개 새 Phase 4 = 블로그 전용, 새 Phase 5 = 카드뉴스 전용 으로 분리. 기존 Phase 5~8(발행 인프라 / 네이버 / 인스타 / dogfooding) 은 각각 +1 씩 뒤로 (Phase 6~9). 사유 — 블로그/카드뉴스의 편집 UX 가 본질적으로 다르고 한 phase ~2일 가설을 지키려면 분리가 필요. 인프라(Phase 1b) 위치는 그대로 — 새 Phase 5 와 새 Phase 6 사이.
+- **2026-05-13**: Phase 4 plan 확정. 블로그 태그 데이터 모델 = DB 컬럼 분리(`drafts.blog_tags text[]`) + prompt 출력 형식 `TAGS:` prefix 별도 줄로 변경 (Phase 3 의 `#태그` 마지막 줄 규약 폐기) — 마크다운 헤딩 충돌 회피. 편집 UX = split layout(좌 raw 마크다운 textarea / 우 react-markdown 실시간 프리뷰, 50:50, 스크롤 동기화 X) + chip 태그 + CharGuide(1200~1800자 가이드) + Autosave(debounce 800ms, AutosaveIndicator saved/saving/failed 3상태, beforeunload + 라우팅 가드). Pretendard 단일 한국어 sans 도입(JetBrains Mono / Source Serif 4 미도입, 본문 textarea 만 시스템 monospace fallback). 인프라 의존 작업은 모두 발행 phase 로 이관 (네이버 채널 미리보기 mockup 등).
+- **2026-05-14**: **Phase 분배 재정렬**. 새 Phase 5 = 대시보드/라이브러리 실데이터 연결(딱 리스트 표기까지). 기존 Phase 5(카드뉴스 편집) → Phase 6 으로 밀고 발행 단계들(6~9) → 7~10. 사유 — Phase 4 dogfooding 진입 시 본인 양산 콘텐츠가 두 화면에서 안 보이는 게 답답해 우선순위 재배치.
+- **2026-05-14**: Phase 5 plan 확정. backend `GET /api/drafts` 신설 + frontend `useQuery(qk.drafts())` + `draftToContent` 어댑터(`lib/api/adapters.ts`)로 mock LIBRARY_ITEMS 제거. drafts.status → Content.state 매핑(pending/generating → processing, ready → draft, failed → failed). 필터 / 검색 / 발행큐 / hero stat 은 out — 발행 phase 묶음.
+- **2026-05-14**: Phase 5 도중 scope 확장. 상세 페이지(`/library/[id]`) lookup 도 본 phase 로 끌어옴 — 라이브러리 카드 클릭 시 mock LIBRARY_ITEMS.find 로 404 떨어지는 문제 회피. 페이지를 client component 로 변환 + DetailInsta/DetailBlog 가 card_news / blog_title·body·tags prop 으로 직접 받음. DetailOverview 의 인터뷰 영역과 DetailActivity 는 그대로 mock(다음 phase 또는 발행 phase).
+- **2026-05-14**: Phase 5 도중 scope 확장 #2. 편집 라우트를 `?mode=blog` 쿼리에서 `/edit/[mode]` dynamic segment 로 전환 + mock 폐기 + 실데이터 autosave 연결. `/new/edit` 의 DraftEditor autosave 패턴(800ms debounce, pending flag, beforeunload) 을 단일 mode 로 축약 재사용. 기존 `BlogEditPanel.tsx` / `[id]/edit/page.tsx` 폐기, `routes.libraryItemEdit(id, mode)` 의 mode 인자 required 화. 저장 후 `qk.drafts()` 리스트 캐시의 해당 row 만 갱신.
+- **2026-05-16**: Phase 6 마감. CardNewsEditor 텍스트 갭(cover tag / outro cta / 카드 추가 type dropdown) + features/insta-export (1080 캡처 컴포넌트 + html-to-image + jszip PNG zip 헤더 actions 다운로드) + 모든 카드(cover/body/outro)에 AI 재생성(stub / pollinations / gemini 3-mode env) + 로컬 업로드(FileReader → data URL, in-memory) + 이미지 제거 토글. backend zod 를 양산용 cardNewsSchema(tuple, LLM 출력 검증)와 편집용 cardNewsEditSchema(array max 8 / bg·fg 자유 hex regex) 로 분리 — 편집 단계 자유도 확보 + autosave 400 루프 해소. CardNewsEditor 모듈화(566 → 본체 ~200줄 + 5 자식 컴포넌트 + presets, CardNewsEditor/ 폴더 구조). 인스타 swipe 캐러셀 / 사진 위치 조절 / Storage 영속화는 [backlog](../backlog.md) 로 미룸. 작업 브랜치 `claude/phase-6-implementation`, 9 commits.
+- **2026-05-17**: Phase 7 마감 (LLM provider 마이그레이션). Gemini → OpenAI 통일 — 텍스트 `gpt-5` 메인 + `gpt-5-mini` 폴백, 이미지 `gpt-image-1` (1024×1024 medium). backend `gemini/` → `llm/` rename, `LlmService` 단일 클래스 + 자체 중립 타입 `LlmRequest` (system / messages / temperature / jsonMode) 도입으로 SDK 결합 청산. `IMAGE_GEN_MODE` 도메인 `stub | pollinations | gemini` → `stub | openai`. JSON 강제는 `response_format: { type: 'json_object' }`, 카드뉴스 응답 shape `[ ... ]` → `{ cards: [ ... ] }` 로 (OpenAI JSON 모드 호환). Pollinations 한→영 prompt 번역 + `buildCardImagePromptForFlux` 폐기. gpt-5 family 가 `temperature` default(1)만 지원하는 제약 발견 → `LlmService` 가 LlmRequest.temperature 를 OpenAI 호출에서 무시 (인터페이스는 미래 호환 유지). frontend 응답 shape / 라우트 시그니처 / DB 변경 없음 — 양산/인터뷰/이미지 재생성 모두 회귀 없음. 양산 1회 비용 ~$0.1 미만 확인.
+- **2026-05-17**: **호스팅 결정 갱신** — frontend = **Vercel** (Next.js 16 first-party, hobby tier, PR preview / CDN / edge runtime 활용). backend + n8n 은 **ECS Fargate** (2026-04-29 결정 유지, Docker / AWS 학습 우선). 이전 plan 표 의 "ECS 위에 frontend 도 함께" 가정 폐기. **도메인 = 가비아 구매 + AWS Route53 nameserver 위임 + ACM cert** (이전 plan 의 Cloudflare 단일 게이트 결정 폐기 — AWS 단일 스택 학습 의도 + 한국 vendor 도메인 결제 친화). **n8n UI 인증 = AWS Cognito + ALB authenticate-cognito** (이전 Cloudflare Access 결정 폐기 — AWS 안에서 완결, ALB listener rule 로 webhook public + UI Cognito 게이트 분기). Phase 1b 인프라 plan 작성 진입 ([2026-05-17-content-pipeline-phase-1b.md](./2026-05-17-content-pipeline-phase-1b.md)).
 
 ---
 

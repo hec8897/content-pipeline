@@ -17,29 +17,17 @@ export function Sparkline({ data, width = 260, height = 60 }: Props) {
     return [x, y] as const;
   });
 
-  const path =
-    "M " +
-    points.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" L ");
+  const path = 'M ' + points.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' L ');
 
   const area =
     `M ${points[0][0]},${height} ` +
-    points.map(([x, y]) => `L ${x.toFixed(1)},${y.toFixed(1)}`).join(" ") +
+    points.map(([x, y]) => `L ${x.toFixed(1)},${y.toFixed(1)}`).join(' ') +
     ` L ${points[points.length - 1][0]},${height} Z`;
 
   return (
-    <svg
-      viewBox={`0 0 ${width} ${height}`}
-      width="100%"
-      height={height}
-      preserveAspectRatio="none"
-    >
+    <svg viewBox={`0 0 ${width} ${height}`} width="100%" height={height} preserveAspectRatio="none">
       <path d={area} fill="var(--color-accent-soft)" />
-      <path
-        d={path}
-        fill="none"
-        stroke="var(--color-accent)"
-        strokeWidth={1.5}
-      />
+      <path d={path} fill="none" stroke="var(--color-accent)" strokeWidth={1.5} />
       {points.map(([x, y], i) => (
         <circle
           key={i}

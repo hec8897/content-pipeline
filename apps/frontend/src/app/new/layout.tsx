@@ -1,13 +1,16 @@
-import { NewContentProvider } from "@/components/new/NewContentContext";
-import { StepNav } from "@/components/new/StepNav";
+import { AuthGuard } from '@/features/auth/components/AuthGuard';
+import { NewContentProvider } from '@/features/new-content/context';
+import { StepNav } from '@/features/new-content/components/StepNav';
 
-export default function NewLayout(props: LayoutProps<"/new">) {
+export default function NewLayout(props: LayoutProps<'/new'>) {
   return (
-    <NewContentProvider>
-      <div className="min-h-screen flex flex-col bg-bg">
-        <StepNav />
-        <main className="flex-1 flex flex-col">{props.children}</main>
-      </div>
-    </NewContentProvider>
+    <AuthGuard>
+      <NewContentProvider>
+        <div className="min-h-screen flex flex-col bg-bg">
+          <StepNav />
+          <main className="flex-1 flex flex-col">{props.children}</main>
+        </div>
+      </NewContentProvider>
+    </AuthGuard>
   );
 }
