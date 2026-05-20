@@ -23,7 +23,7 @@ async function bootstrap() {
   });
 
   const port = Number(process.env.PORT ?? 3001);
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
   Logger.log(`🚀 content-pipeline backend on http://localhost:${port}/api`);
 }
 
