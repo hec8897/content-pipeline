@@ -1,0 +1,59 @@
+name: Deploy backend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/backend/**'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'package.json'
+      - '.github/workflows/deploy-backend.yml'
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: ap-northeast-2
+  ECR_REPO: 837411606914.dkr.ecr.ap-northeast-2.amazonaws.com/cp-backend
+  ECS_CLUSTER: cp-cluster
+  ECS_SERVICE: cp-backend-svc
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::837411606914:role/cp-github-deploy
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build & push (linux/amd64)
+        run: |
+          docker buildx build \
+            --platform linux/amd64 \
+            --provenance=false \
+            -f apps/backend/Dockerfile \
+            -t $ECR_REPO:latest \
+            -t $ECR_REPO:${{ github.sha }} \
+            --push \
+            .
+
+      - name: Force ECS new deployment
+        run: |
+          aws ecs update-service \
+            --region $AWS_REGION \
+            --cluster $ECS_CLUSTER \
+            --service $ECS_SERVICE \
+            --force-new-deployment \
+            --no-cli-pager
