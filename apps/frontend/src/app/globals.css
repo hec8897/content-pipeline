@@ -67,6 +67,8 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  /* 모달 등의 scroll lock 시 layout shift 방지 — scrollbar 자리를 항상 비워둠 */
+  scrollbar-gutter: stable;
 }
 
 button {
