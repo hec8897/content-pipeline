@@ -423,6 +423,7 @@ n8n에 들어오는 트래픽은 두 종류:
 | 6     | [Phase 6 — 카드뉴스 편집 + AI 이미지 + PNG export](./2026-05-15-content-pipeline-phase-6.md) | 완료 (브랜치 `claude/phase-6-implementation`) |
 | 7     | [Phase 7 — LLM provider 마이그레이션 (Gemini → OpenAI)](./2026-05-16-llm-migration-openai.md) | 완료 (브랜치 `claude/phase-7-llm-migration`) |
 | 1b    | [Phase 1b — 인프라 (Vercel + ECS + n8n + Cognito)](./2026-05-17-content-pipeline-phase-1b.md) | 진행 중 (브랜치 `claude/phase-1b-infra`, Task 1~9 마감) |
+| 7.5   | [Phase 7.5 — UI 시스템 + dogfooding 필수 기능 보강](./2026-05-21-content-pipeline-dogfooding-essentials.md) | plan 작성 완료, 구현 대기 |
 | 8     | _Phase 8 — 발행 인프라 (큐/스케줄러/n8n webhook)_                            | —                                 |
 | 9     | _Phase 9 — 네이버 자동_                                                      | —                                 |
 | 10    | _Phase 10 — 인스타 자동_                                                     | —                                 |

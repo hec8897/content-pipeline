@@ -80,3 +80,21 @@ Phase 단위 plan 과 별개로 "지금은 안 하지만 잊으면 안 되는" �
 - **본질**: 카드 수 늘어나면 캡처 루프가 main thread 점유. 사용자가 "3/8 캡처 중" 같은 progress 없음 + 도중 취소 불가.
 - **작업 단위 후보**: (1) onProgress(i, total) 콜백 추가, (2) AbortController 전달해 사용자가 취소 가능, (3) 카드 사이 requestAnimationFrame.
 - **미루는 사유**: 현재 카드 수 ≤ 8 이라 체감 부담 적음. 자유 카드 수 확장 시 우선순위 ↑.
+
+---
+
+## UI 시스템 (점진적)
+
+### B-11. Popover 시스템 (3 variants)
+- **결정일**: 2026-05-21 (Phase 7.5 — UI 시스템 구축 plan 작성 시점)
+- **연동 항목**: [Phase 7.5 plan](./plans/2026-05-21-content-pipeline-dogfooding-essentials.md), `claude_design/design_handoff_modals/README.md`
+- **본질**: 디자인 핸드오프에 명시된 Popover 3 variants — `more` (⋯ 메뉴, 5 액션 + destructive), `channels` (멀티 체크박스 + 연결 상태 dot), `inline confirm` (작은 confirm 240px). 앵커 기반, 바깥 클릭/Esc close, 다른 popover 트리거 시 자동 close.
+- **작업 단위 후보**: (1) `components/ui/Popover.tsx` 베이스 — 앵커 positioning + outside click + escape, (2) variant 컴포넌트 3개, (3) demo page `/dev/modals` 의 popover 섹션 추가.
+- **미루는 사유**: Phase 7.5 시점 즉시 use case 없음 (more menu / 채널 선택 / 인라인 삭제 confirm 은 추후 발행 phase 또는 라이브러리 액션 메뉴에서). Modal/ConfirmDialog/Toast 토대 잡힌 후 같은 패턴으로 추가 가능.
+
+### B-12. Bottom Sheet 시스템 (2 variants, 모바일)
+- **결정일**: 2026-05-21 (Phase 7.5 plan 작성 시점)
+- **연동 항목**: [Phase 7.5 plan](./plans/2026-05-21-content-pipeline-dogfooding-essentials.md), `claude_design/design_handoff_modals/README.md`
+- **본질**: 모바일 (< 600px) 에서 confirm dialog / ⋯ 메뉴 대체. `sheet-actions` (5 액션 + danger + 큰 취소) / `sheet-confirm` (풀폭 primary + 풀폭 ghost). 화면 하단 슬라이드 업, 36×4 grip handle.
+- **작업 단위 후보**: (1) `components/ui/BottomSheet.tsx` 베이스 — translate + radius 18px top + drag handle, (2) variant 2개, (3) viewport < 600px 시 ConfirmDialog 가 자동으로 BottomSheet 으로 fallback 하는 hook 또는 패턴.
+- **미루는 사유**: dogfooding 단계 데스크톱 중심. 모바일 dogfooding 시점 또는 일반 사용자 대응 전 단계에서 우선순위 ↑.
