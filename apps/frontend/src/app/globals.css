@@ -1,5 +1,5 @@
-@import "tailwindcss";
-@import "pretendard/dist/web/variable/pretendardvariable.css";
+@import 'tailwindcss';
+@import 'pretendard/dist/web/variable/pretendardvariable.css';
 
 @theme inline {
   /* Brand */
@@ -20,16 +20,39 @@
   /* Channel brand */
   --color-naver: #03c75a;
 
-  /* Type — Pretendard 단일 사용 */
+  /* Type — Pretendard 단일 사용 (디자인 핸드오프의 Inter Tight / JetBrains Mono 무시 결정) */
   --font-sans:
-    "Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont,
-    system-ui, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui,
+    'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
   --font-mono:
-    "Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont,
-    system-ui, sans-serif;
+    'Pretendard Variable', 'Pretendard', ui-monospace, 'SFMono-Regular', monospace;
   --font-serif:
-    "Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont,
-    system-ui, sans-serif;
+    'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+
+  /* Shadows — Phase 7.5 UI 시스템 */
+  --shadow-modal:
+    0 1px 1px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(20, 20, 24, 0.12),
+    0 24px 60px rgba(20, 20, 24, 0.18);
+  --shadow-toast: 0 2px 4px rgba(0, 0, 0, 0.04), 0 12px 30px rgba(0, 0, 0, 0.1);
+  --shadow-popover: 0 4px 12px rgba(0, 0, 0, 0.06), 0 12px 28px rgba(0, 0, 0, 0.1);
+}
+
+/* UI 시스템 변수 — Tailwind utility 자동 생성 대상 외 (scrim / motion) */
+:root {
+  /* Scrim (모달 backdrop) */
+  --scrim-bg: rgba(20, 20, 24, 0.45);
+  --scrim-blur: 2px;
+
+  /* Motion easing */
+  --easing-out-soft: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  /* Motion duration */
+  --duration-modal-scrim: 140ms;
+  --duration-modal-content: 160ms;
+  --duration-toast-in: 220ms;
+  --duration-toast-out: 180ms;
+  --duration-popover: 120ms;
+  --duration-sheet: 200ms;
 }
 
 * {

@@ -44,7 +44,7 @@ Popover/Sheet 는 우리 즉시 use case 없음 — 필요해지면 (모바일 /
 | **UI 시스템 scope** | **점진적 C** — Modal + ConfirmDialog 6 + Toast 4 만 본 phase | Popover/Sheet 는 즉시 use case 없음. 필요 시 backlog 에서 꺼냄 |
 | **구현 방식** | **자체 구현** (Radix / Headless UI / shadcn 미사용) | 의존성 추가 X, 디자인 핸드오프 따라 직접 구축. focus trap / escape / ARIA 도 직접 작성 |
 | **디자인 토큰 위치** | `app/globals.css` 의 CSS variables (`--a-*` 그대로) + Tailwind v4 `@theme` mapping | 디자인 핸드오프와 변수명/값 일치, Tailwind v4 의 `@theme` 가 CSS variables 잘 받음 |
-| **폰트** | Inter Tight (sans) + Pretendard Variable (한글) + JetBrains Mono (mono) | 핸드오프 spec. Pretendard 는 이미 도입, 나머지 추가 |
+| **폰트** | **Pretendard 단일** (디자인 핸드오프의 Inter Tight / JetBrains Mono 무시) | Phase 4 의 결정 — Pretendard 단일 한국어 sans, 한글 콘텐츠 위주 SaaS 라 적합. mono 는 시스템 fallback (`ui-monospace`) |
 | **Toast store** | React Context + reducer (자체 구현) | dogfooding 단계엔 충분. zustand/jotai 의존성 추가 안 함. global provider 하나 (`<ToastProvider>`) + `useToast()` hook |
 | **모달 stack 정책** | **순차 — 동시 1개만** | 답변 편집 모달의 "저장 후 다시 양산" 클릭 시 → 답변 모달 close + confirm modal 열기. focus trap nesting 회피 |
 | **Demo page** | `app/dev/modals/page.tsx` — production 비공개 | `modals.html` 의 React 버전. 모든 variant 트리거 시현 가능 |
@@ -69,10 +69,10 @@ Popover/Sheet 는 우리 즉시 use case 없음 — 필요해지면 (모바일 /
 - 기존 endpoint `POST /api/drafts/<id>/cards/<idx>/regenerate-image` 수정 — OpenAI 응답 binary → Storage push → URL 반환
 - 양산 (`/draft/generate`) 의 cover 카드 자동 이미지 생성 흐름 — 기존 코드 그대로, 단 결과 URL 을 `bg_image` 에 박음
 
-**Frontend — 디자인 토큰 + 폰트**
-- `app/globals.css` — `--a-*` CSS variables (디자인 핸드오프 그대로) + Tailwind v4 `@theme` mapping
-- `app/layout.tsx` 또는 `app/fonts.ts` — `next/font/google` 로 Inter Tight + JetBrains Mono 도입, Pretendard 는 기존 유지
-- `tailwind.config` 폐기 또는 v4 패턴 따름
+**Frontend — 디자인 토큰**
+- `app/globals.css` — 기존 `--color-*` 토큰 유지 (이미 디자인 핸드오프의 색상과 일치), 추가로 `--shadow-modal/-toast/-popover` 및 `--scrim-*`, `--easing-out-soft`, `--duration-*` 모달 시스템 토큰 추가
+- 폰트는 **Pretendard 단일** 유지 (디자인 핸드오프의 Inter Tight / JetBrains Mono 무시)
+- Tailwind v4 의 `@theme inline` 패턴 그대로 (shadow 등은 `@theme` 안에 두어 utility 자동 생성, scrim/motion 은 `:root` 에 두어 직접 참조)
 
 **Frontend — UI primitives (재사용)**
 - `components/ui/Modal.tsx` 신설 — 베이스 컴포넌트:
