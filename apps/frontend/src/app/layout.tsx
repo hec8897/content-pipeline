@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 
+import { ConfirmDialogRoot } from '@/components/ui/ConfirmDialogRoot';
 import { QueryProvider } from '@/providers/QueryProvider';
 import { SupabaseProvider } from '@/providers/SupabaseProvider';
 
@@ -20,6 +21,7 @@ export default function RootLayout({
         <QueryProvider>
           <SupabaseProvider>{children}</SupabaseProvider>
         </QueryProvider>
+        <ConfirmDialogRoot />
       </body>
     </html>
   );

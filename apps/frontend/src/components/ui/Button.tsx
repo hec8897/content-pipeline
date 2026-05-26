@@ -1,6 +1,6 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
-type Variant = 'primary' | 'ghost';
+type Variant = 'primary' | 'ghost' | 'danger' | 'ghost-danger';
 type Size = 'sm' | 'md';
 
 type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -15,6 +15,9 @@ const base =
 const variantClass: Record<Variant, string> = {
   primary: 'bg-text text-white hover:bg-black font-semibold',
   ghost: 'bg-transparent border border-border text-text-2 hover:bg-surface-2 hover:text-text',
+  danger: 'bg-danger text-white hover:brightness-95 font-semibold',
+  'ghost-danger':
+    'bg-transparent border border-danger/40 text-danger hover:bg-danger/10 font-semibold',
 };
 
 const sizeClass: Record<Size, string> = {
