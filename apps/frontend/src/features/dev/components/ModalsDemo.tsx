@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { ConfirmDetailPanel } from '@/components/ui/ConfirmDialog';
 import { Button } from '@/components/ui/Button';
 import { confirm, confirmUnsaved } from '@/lib/confirm';
+import { toast } from '@/lib/toast';
 
 type LogEntry = { id: number; label: string; result: string };
 
@@ -164,6 +165,49 @@ export function ModalsDemo() {
     },
   ];
 
+  const toasts: Array<{ key: string; label: string; desc: string; run: () => void }> = [
+    {
+      key: 'success',
+      label: 'success',
+      desc: '4초 자동 닫힘 + 진행바',
+      run: () =>
+        toast.success('발행 완료', { msg: '네이버 · 인스타 2채널에 게시했어요.' }),
+    },
+    {
+      key: 'error',
+      label: 'error',
+      desc: 'persistent (수동 닫기) + 액션 2개',
+      run: () =>
+        toast.error('인스타그램 발행 실패', {
+          msg: 'Graph API · error 24. 재시도해 보세요.',
+          actions: [
+            { label: '로그', onClick: () => toast.info('로그 보기', { msg: '(데모)' }) },
+            { label: '↻ 재시도', primary: true, onClick: () => toast.success('재시도 시작') },
+          ],
+        }),
+    },
+    {
+      key: 'info',
+      label: 'info',
+      desc: '6초 + primary 액션',
+      run: () =>
+        toast.info('백그라운드 양산 중', {
+          msg: '카드 8장 생성 · 약 18초 남음',
+          actions: [{ label: '큐에서 보기 →', primary: true }],
+        }),
+    },
+    {
+      key: 'warn',
+      label: 'warn / undo',
+      desc: '5초 + 실행 취소',
+      run: () =>
+        toast.warn('보관함으로 이동했어요', {
+          msg: '5초 안에 되돌릴 수 있어요.',
+          actions: [{ label: '실행 취소', primary: true, onClick: () => toast.success('되돌렸어요') }],
+        }),
+    },
+  ];
+
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
       <header className="mb-8">
@@ -174,11 +218,14 @@ export function ModalsDemo() {
           ConfirmDialog 데모
         </h1>
         <p className="text-text-2 mt-1.5 text-[13.5px] leading-[1.6]">
-          6개 variant 를 트리거하고 resolve 값을 아래 로그에서 확인하세요. Escape / 배경 클릭 / 취소
-          시 cancel 로 resolve 됩니다. <span className="text-text-3">(Toast 는 Task D 이후 추가)</span>
+          ConfirmDialog 6종 + Toast 4종을 트리거하고, confirm 의 resolve 값을 아래 로그에서
+          확인하세요. Escape / 배경 클릭 / 취소 시 cancel 로 resolve 됩니다.
         </p>
       </header>
 
+      <div className="text-text-3 mb-2 font-mono text-[10.5px] uppercase tracking-[0.6px]">
+        ConfirmDialog
+      </div>
       <section className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
         {triggers.map((t) => (
           <div
@@ -192,6 +239,27 @@ export function ModalsDemo() {
             </div>
             <Button variant="ghost" size="sm" onClick={() => void t.run()} className="self-start">
               트리거
+            </Button>
+          </div>
+        ))}
+      </section>
+
+      <div className="text-text-3 mb-2 mt-7 font-mono text-[10.5px] uppercase tracking-[0.6px]">
+        Toast
+      </div>
+      <section className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+        {toasts.map((t) => (
+          <div
+            key={t.key}
+            className="border-border flex flex-col gap-2.5 rounded-[10px] border p-4"
+            style={{ background: 'var(--color-surface)' }}
+          >
+            <div>
+              <div className="text-text font-mono text-[12px] font-semibold">{t.label}</div>
+              <div className="text-text-2 mt-1 text-[12px] leading-[1.5]">{t.desc}</div>
+            </div>
+            <Button variant="ghost" size="sm" onClick={t.run} className="self-start">
+              띄우기
             </Button>
           </div>
         ))}

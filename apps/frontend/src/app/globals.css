@@ -97,6 +97,31 @@ textarea {
   }
 }
 
+/* Toast — Phase 7.5 UI 시스템 (디자인 핸드오프 §2) */
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes toast-out {
+  to {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+
+@keyframes toast-progress {
+  to {
+    transform: scaleX(0);
+  }
+}
+
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }

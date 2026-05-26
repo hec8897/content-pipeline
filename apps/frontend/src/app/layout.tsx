@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 import { ConfirmDialogRoot } from '@/components/ui/ConfirmDialogRoot';
+import { ToastViewport } from '@/components/ui/ToastViewport';
 import { QueryProvider } from '@/providers/QueryProvider';
 import { SupabaseProvider } from '@/providers/SupabaseProvider';
 
@@ -22,6 +23,7 @@ export default function RootLayout({
           <SupabaseProvider>{children}</SupabaseProvider>
         </QueryProvider>
         <ConfirmDialogRoot />
+        <ToastViewport />
       </body>
     </html>
   );
