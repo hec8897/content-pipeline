@@ -37,8 +37,8 @@ export type CardNewsCard = {
   cta?: string;
   bg: string;
   fg: string;
-  // Phase 6 — AI 재생성 결과 data URL. 클라 in-memory only.
-  // fromEditorCards 가 strip 해 DB/API 로는 흐르지 않음.
+  // Phase 7.5 — 카드 배경 이미지 Storage public URL (AI 재생성/업로드 결과).
+  // PATCH 로 card_news[idx].bg_image 에 영속화된다.
   bg_image?: string;
 };
 

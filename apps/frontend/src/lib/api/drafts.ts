@@ -25,9 +25,23 @@ export const draftsApi = {
   async regenerateCardImage(
     draftId: string,
     cardIndex: number,
-  ): Promise<{ imageBase64: string }> {
-    const res = await api.post<{ imageBase64: string }>(
+  ): Promise<{ imageUrl: string }> {
+    const res = await api.post<{ imageUrl: string }>(
       `/drafts/${draftId}/cards/${cardIndex}/regenerate-image`,
+    );
+    return res.data;
+  },
+
+  async uploadCardImage(
+    draftId: string,
+    cardIndex: number,
+    file: File,
+  ): Promise<{ imageUrl: string }> {
+    const form = new FormData();
+    form.append('file', file);
+    const res = await api.post<{ imageUrl: string }>(
+      `/drafts/${draftId}/cards/${cardIndex}/upload-image`,
+      form,
     );
     return res.data;
   },

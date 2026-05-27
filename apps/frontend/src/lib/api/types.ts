@@ -67,6 +67,8 @@ export interface CardNewsCardData {
   cta?: string;
   bg: string;
   fg: string;
+  // Phase 7.5 — 카드 배경 이미지 Storage public URL. PATCH 로 영속화됨.
+  bg_image?: string;
 }
 
 export interface Draft {
