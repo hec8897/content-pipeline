@@ -9,6 +9,7 @@ import {
 
 import type { InterviewHistoryItem } from '@/interview/interview.prompts';
 import { LlmService } from '@/llm/llm.service';
+import { StorageService } from '@/storage/storage.service';
 import type { Database } from '@/supabase/database.types';
 import { SupabaseService } from '@/supabase/supabase.service';
 
@@ -43,6 +44,7 @@ export class DraftsService {
   constructor(
     private readonly supabase: SupabaseService,
     private readonly llm: LlmService,
+    private readonly storage: StorageService,
   ) {}
 
   async getForTopic(topicId: string, userId: string): Promise<DraftState> {
@@ -119,17 +121,16 @@ export class DraftsService {
     }
   }
 
-  // Phase 6 — 모든 카드 AI 배경 이미지 재생성 허용. 응답은 클라 in-memory 만 (DB 저장 X).
-  async regenerateCardImage(
+  // Phase 7.5 — 카드 이미지 재생성/업로드 공통 검증. ready 상태 + 본인 소유 + index 범위.
+  private async requireOwnedReadyDraftForCard(
     draftId: string,
     userId: string,
     cardIndex: number,
-  ): Promise<{ imageBase64: string }> {
+  ): Promise<{ draft: DraftRow; cards: CardNews }> {
     const draft = await this.loadOwnedDraft(draftId, userId);
     if (draft.status !== 'ready') {
       throw new BadRequestException('Draft is not ready');
     }
-
     const cards = draft.card_news as CardNews | null;
     if (!cards || !Array.isArray(cards)) {
       throw new BadRequestException('Draft has no card_news');
@@ -137,12 +138,51 @@ export class DraftsService {
     if (cardIndex < 0 || cardIndex >= cards.length) {
       throw new BadRequestException(`cardIndex ${cardIndex} out of range`);
     }
+    return { draft, cards };
+  }
+
+  // Phase 7.5 — AI 배경 이미지 재생성. PNG 결과를 Storage 에 push 후 public URL 반환.
+  // DB(card_news[idx].bg_image) 저장은 안 함 — 프론트가 편집 상태로 들고 있다 PATCH 때 영속화.
+  async regenerateCardImage(
+    draftId: string,
+    userId: string,
+    cardIndex: number,
+  ): Promise<{ imageUrl: string }> {
+    const { draft, cards } = await this.requireOwnedReadyDraftForCard(draftId, userId, cardIndex);
     const card = cards[cardIndex];
 
     const topic = await this.loadOwnedTopic(draft.topic_id, userId);
     const fullPrompt = `${IMAGE_GEN_SYSTEM}\n\n---\n\n${buildCardImagePrompt(card, topic.title)}`;
     const { imageBase64 } = await this.llm.generateImage({ prompt: fullPrompt });
-    return { imageBase64 };
+
+    const imageUrl = await this.storage.uploadCardImage({
+      userId,
+      draftId,
+      cardIndex,
+      body: Buffer.from(imageBase64, 'base64'),
+      contentType: 'image/png', // gpt-image-1 은 PNG b64
+    });
+    return { imageUrl };
+  }
+
+  // Phase 7.5 — 사용자 업로드 이미지를 Storage 에 push 후 public URL 반환. regenerate 와 동일하게 DB 미저장.
+  async uploadCardImage(args: {
+    draftId: string;
+    userId: string;
+    cardIndex: number;
+    body: Buffer;
+    contentType: string;
+  }): Promise<{ imageUrl: string }> {
+    await this.requireOwnedReadyDraftForCard(args.draftId, args.userId, args.cardIndex);
+
+    const imageUrl = await this.storage.uploadCardImage({
+      userId: args.userId,
+      draftId: args.draftId,
+      cardIndex: args.cardIndex,
+      body: args.body,
+      contentType: args.contentType,
+    });
+    return { imageUrl };
   }
 
   async patch(draftId: string, userId: string, payload: unknown): Promise<DraftRow> {

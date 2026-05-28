@@ -31,10 +31,10 @@ export function toEditorCards(cards: CardNewsCardData[]): CardNewsCard[] {
 
 export function fromEditorCards(cards: CardNewsCard[]): CardNewsCardData[] {
   return cards.map((c) => {
-    // Phase 6 — bg_image 는 클라 in-memory only. autosave payload 에서 제외.
-    const { id, bg_image, ...rest } = c;
+    // id 는 frontend sortable 전용 → strip. bg_image(Storage URL)는
+    // Phase 7.5 부터 PATCH 로 영속화하므로 유지.
+    const { id, ...rest } = c;
     void id;
-    void bg_image;
     return rest;
   });
 }
