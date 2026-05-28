@@ -24,14 +24,6 @@ import { DraftsService } from './drafts.service';
 
 type AuthedRequest = Request & { user: User };
 
-// @types/multer 미설치 — FileInterceptor 가 채우는 필드만 최소 정의.
-interface UploadedImageFile {
-  buffer: Buffer;
-  mimetype: string;
-  size: number;
-  originalname: string;
-}
-
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5MB — 버킷 file_size_limit 와 일치
 
 @Controller('drafts')
@@ -71,7 +63,7 @@ export class DraftsController {
     @Req() req: AuthedRequest,
     @Param('id', ParseUUIDPipe) id: string,
     @Param('index', ParseIntPipe) index: number,
-    @UploadedFile() file: UploadedImageFile | undefined,
+    @UploadedFile() file: Express.Multer.File | undefined,
   ) {
     if (index < 0 || index > 7) {
       throw new BadRequestException('index must be 0..7');
