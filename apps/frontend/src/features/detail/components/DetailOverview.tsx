@@ -1,9 +1,10 @@
 import { ArrowUpRight, Pencil, RotateCw, Download, Copy, Archive } from 'lucide-react';
 import type { Content } from '@/types';
+import type { InterviewSummary } from '@/lib/api/types';
 import { Panel } from '@/components/ui/Panel';
 import { ChannelIcon } from '@/components/ui/ChannelIcon';
 import { Sparkline } from '@/components/ui/Sparkline';
-import { INTERVIEW_QUESTIONS, SPARKLINE_DATA } from '@/mocks';
+import { SPARKLINE_DATA } from '@/mocks';
 import { formatNumber } from '@/lib/format';
 
 const channelInfo = {
@@ -27,7 +28,21 @@ const actions = [
 
 const tags = ['#성견입양', '#1인가구', '#푸들', '#반려견일상', '#적응기'];
 
-export function DetailOverview({ content }: { content: Content }) {
+const PREVIEW_COUNT = 3;
+
+export function DetailOverview({
+  content,
+  interview,
+  interviewLoading = false,
+}: {
+  content: Content;
+  interview: InterviewSummary | null;
+  interviewLoading?: boolean;
+}) {
+  const qa = interview?.qa ?? [];
+  const previewQa = qa.slice(0, PREVIEW_COUNT);
+  const remainingCount = Math.max(qa.length - PREVIEW_COUNT, 0);
+
   return (
     <div className="px-7 py-6 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-5">
       <div className="flex flex-col gap-5 min-w-0">
@@ -75,22 +90,39 @@ export function DetailOverview({ content }: { content: Content }) {
           </div>
         </Panel>
 
-        <Panel title="원본 인터뷰" sub={`${INTERVIEW_QUESTIONS.length}개 질문`}>
-          <div className="flex flex-col">
-            {INTERVIEW_QUESTIONS.slice(0, 3).map((qa, i) => (
-              <div
-                key={i}
-                className="px-3.5 py-3 border-t border-border first:border-t-0 flex flex-col gap-1"
-              >
-                <span className="text-[10.5px] font-mono text-text-3 uppercase">Q{i + 1}</span>
-                <p className="text-[13px] font-medium text-text">{qa.q}</p>
-                <p className="text-[12px] text-text-2">{qa.a}</p>
-              </div>
-            ))}
-            <button className="border-t border-border px-3.5 py-2.5 text-[11.5px] text-text-2 hover:bg-surface-2 text-left">
-              나머지 {INTERVIEW_QUESTIONS.length - 3}개 질문 보기 →
-            </button>
-          </div>
+        <Panel
+          title="원본 인터뷰"
+          sub={qa.length > 0 ? `${qa.length}개 질문` : undefined}
+        >
+          {interviewLoading ? (
+            <div className="px-3.5 py-6 text-[12px] text-text-3">불러오는 중…</div>
+          ) : qa.length === 0 ? (
+            <div className="px-3.5 py-6 text-[12px] text-text-3">
+              인터뷰 기록이 없어요.
+            </div>
+          ) : (
+            <div className="flex flex-col">
+              {previewQa.map((item, i) => (
+                <div
+                  key={item.questionId}
+                  className="px-3.5 py-3 border-t border-border first:border-t-0 flex flex-col gap-1"
+                >
+                  <span className="text-[10.5px] font-mono text-text-3 uppercase">
+                    Q{i + 1}
+                  </span>
+                  <p className="text-[13px] font-medium text-text">{item.question}</p>
+                  <p className="text-[12px] text-text-2">
+                    {item.answer ?? <span className="text-text-3">답변 없음</span>}
+                  </p>
+                </div>
+              ))}
+              {remainingCount > 0 && (
+                <button className="border-t border-border px-3.5 py-2.5 text-[11.5px] text-text-2 hover:bg-surface-2 text-left">
+                  나머지 {remainingCount}개 질문 보기 →
+                </button>
+              )}
+            </div>
+          )}
         </Panel>
       </div>
 

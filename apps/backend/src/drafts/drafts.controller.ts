@@ -36,6 +36,11 @@ export class DraftsController {
     return this.drafts.listForUser(req.user.id);
   }
 
+  @Get(':id/interview')
+  getInterview(@Req() req: AuthedRequest, @Param('id', ParseUUIDPipe) id: string) {
+    return this.drafts.getInterviewForDraft(id, req.user.id);
+  }
+
   @Patch(':id')
   patch(
     @Req() req: AuthedRequest,

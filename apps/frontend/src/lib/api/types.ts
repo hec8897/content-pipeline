@@ -108,6 +108,19 @@ export interface DraftListItem {
   };
 }
 
+export interface InterviewQAItem {
+  questionId: string;
+  question: string;
+  answerId: string | null;
+  answer: string | null;
+}
+
+export interface InterviewSummary {
+  sessionId: string;
+  status: SessionStatus;
+  qa: InterviewQAItem[];
+}
+
 export interface PatchDraftPayload {
   card_news?: CardNewsCardData[];
   blog_title?: string;
