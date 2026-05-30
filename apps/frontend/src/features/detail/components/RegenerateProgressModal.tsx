@@ -40,7 +40,7 @@ export function RegenerateProgressModal({ open, topicId, draftId, onClose, onSuc
   const [error, setError] = useState<string | null>(null);
   const firedRef = useRef(false);
 
-  const mutation = useMutation({
+  const { mutate, isPending } = useMutation({
     mutationFn: () => draftsApi.generate(topicId),
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: qk.drafts() });
@@ -54,8 +54,6 @@ export function RegenerateProgressModal({ open, topicId, draftId, onClose, onSuc
       setError(err instanceof ApiError ? err.message : '알 수 없는 오류가 발생했어요');
     },
   });
-
-  const mutate = mutation.mutate;
 
   // 모달이 열릴 때 1회 양산 발사 + 상태 초기화. 닫히면 다음 open 을 위해 firedRef reset.
   useEffect(() => {
@@ -73,7 +71,7 @@ export function RegenerateProgressModal({ open, topicId, draftId, onClose, onSuc
 
   // 진행 중 스텝/로그를 시간 기반으로 advance.
   useEffect(() => {
-    if (!mutation.isPending) return;
+    if (!isPending) return;
     const id = setInterval(() => {
       setActive((a) => Math.min(a + 1, GENERATE_STEPS.length));
       setLogs((prev) => {
@@ -83,7 +81,7 @@ export function RegenerateProgressModal({ open, topicId, draftId, onClose, onSuc
       });
     }, STEP_INTERVAL_MS);
     return () => clearInterval(id);
-  }, [mutation.isPending]);
+  }, [isPending]);
 
   const handleRetry = () => {
     setError(null);
