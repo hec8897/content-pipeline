@@ -26,7 +26,7 @@ type AnswerEditModalProps = {
   draftId: string;
   sessionId: string;
   target: AnswerEditTarget | null;
-  /** 답변 저장(PATCH)이 성공할 때마다 호출 — 상위의 hasEdited 추적용. */
+  /** 답변 저장(upsert)이 성공할 때마다 호출 — 상위의 hasEdited 추적용. */
   onSaved?: () => void;
   /**
    * 저장 성공 후 "다시 양산" 흐름으로 이어갈 때 호출 (M 단계).
@@ -134,6 +134,7 @@ export function AnswerEditModal({
           onChange={(e) => setValue(e.target.value)}
           rows={5}
           disabled={mutation.isPending}
+          aria-label="답변"
           placeholder="답변을 입력해주세요."
           className="border-border focus:border-accent focus:shadow-[0_0_0_3px_var(--color-accent-soft)] mt-3.5 w-full resize-y rounded-md border bg-white px-3 py-2.5 text-[13px] leading-[1.6] outline-none transition-shadow disabled:opacity-50"
         />

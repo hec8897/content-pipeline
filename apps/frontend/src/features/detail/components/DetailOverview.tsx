@@ -130,7 +130,8 @@ export function DetailOverview({
           ) : (
             <div className="flex flex-col">
               {visibleQa.map((item, i) => (
-                <div
+                <button
+                  type="button"
                   key={item.questionId}
                   onClick={() =>
                     setEditTarget({
@@ -140,7 +141,8 @@ export function DetailOverview({
                       answer: item.answer ?? '',
                     })
                   }
-                  className="group px-3.5 py-3 border-t border-border first:border-t-0 flex flex-col gap-1 cursor-pointer hover:bg-surface-2"
+                  aria-label={`Q${i + 1} 답변 편집`}
+                  className="group w-full text-left px-3.5 py-3 border-t border-border first:border-t-0 flex flex-col gap-1 cursor-pointer hover:bg-surface-2"
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-[10.5px] font-mono text-text-3 uppercase">Q{i + 1}</span>
@@ -150,7 +152,7 @@ export function DetailOverview({
                   <p className="text-[12px] text-text-2">
                     {item.answer ?? <span className="text-text-3">답변 없음 · 클릭해 추가</span>}
                   </p>
-                </div>
+                </button>
               ))}
               {remainingCount > 0 && (
                 <button
