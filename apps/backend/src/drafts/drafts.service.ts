@@ -37,6 +37,19 @@ export interface DraftState {
   draft: DraftRow | null;
 }
 
+export interface InterviewQA {
+  questionId: string;
+  question: string;
+  answerId: string | null;
+  answer: string | null;
+}
+
+export interface InterviewSummary {
+  sessionId: string;
+  status: SessionRow['status'];
+  qa: InterviewQA[];
+}
+
 @Injectable()
 export class DraftsService {
   private readonly logger = new Logger(DraftsService.name);
@@ -51,6 +64,32 @@ export class DraftsService {
     const topic = await this.loadOwnedTopic(topicId, userId);
     const draft = await this.loadDraftByTopic(topicId);
     return { topic, draft };
+  }
+
+  async getInterviewForDraft(draftId: string, userId: string): Promise<InterviewSummary | null> {
+    const draft = await this.loadOwnedDraft(draftId, userId);
+    const session = await this.loadLatestSession(draft.topic_id);
+    if (!session) return null;
+
+    const messages = await this.loadMessages(session.id);
+    const byTurn = new Map<number, { question?: MessageRow; answer?: MessageRow }>();
+    for (const m of messages) {
+      const slot = byTurn.get(m.turn) ?? {};
+      if (m.role === 'assistant') slot.question = m;
+      else slot.answer = m;
+      byTurn.set(m.turn, slot);
+    }
+    const qa: InterviewQA[] = Array.from(byTurn.entries())
+      .sort(([a], [b]) => a - b)
+      .filter(([, slot]) => slot.question)
+      .map(([, slot]) => ({
+        questionId: slot.question!.id,
+        question: slot.question!.content,
+        answerId: slot.answer?.id ?? null,
+        answer: slot.answer?.content ?? null,
+      }));
+
+    return { sessionId: session.id, status: session.status, qa };
   }
 
   async listForUser(userId: string) {

@@ -1,5 +1,11 @@
 import { api } from './client';
-import type { Draft, DraftListItem, DraftWithTopic, PatchDraftPayload } from './types';
+import type {
+  Draft,
+  DraftListItem,
+  DraftWithTopic,
+  InterviewSummary,
+  PatchDraftPayload,
+} from './types';
 
 export const draftsApi = {
   async list(): Promise<DraftListItem[]> {
@@ -29,6 +35,11 @@ export const draftsApi = {
     const res = await api.post<{ imageUrl: string }>(
       `/drafts/${draftId}/cards/${cardIndex}/regenerate-image`,
     );
+    return res.data;
+  },
+
+  async getInterview(draftId: string): Promise<InterviewSummary | null> {
+    const res = await api.get<InterviewSummary | null>(`/drafts/${draftId}/interview`);
     return res.data;
   },
 
