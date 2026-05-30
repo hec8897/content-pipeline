@@ -31,4 +31,19 @@ export const interviewApi = {
     );
     return res.data;
   },
+
+  /**
+   * 질문(questionId)에 대한 user 답변을 upsert — 기존 답변 수정 + "답변 없음" 채우기 모두 처리.
+   */
+  async upsertAnswer(
+    sessionId: string,
+    questionId: string,
+    content: string,
+  ): Promise<InterviewMessage> {
+    const res = await api.put<InterviewMessage>(
+      `/interview/${sessionId}/questions/${questionId}/answer`,
+      { content },
+    );
+    return res.data;
+  },
 };

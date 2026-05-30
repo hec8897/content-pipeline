@@ -212,6 +212,60 @@ export class InterviewService {
     return updated;
   }
 
+  /**
+   * 특정 질문(assistant 메시지)에 대한 user 답변을 upsert.
+   * 해당 turn 에 user 메시지가 있으면 수정, 없으면 새로 추가 — "답변 없음" 항목도 채울 수 있게.
+   */
+  async upsertAnswer(
+    sessionId: string,
+    questionId: string,
+    userId: string,
+    content: string,
+  ): Promise<MessageRow> {
+    const session = await this.loadOwnedSession(sessionId, userId);
+    if (session.status === 'active') {
+      throw new BadRequestException('Cannot edit messages while interview is active');
+    }
+
+    const { data: question, error: qErr } = await this.supabase.admin
+      .from('interview_messages')
+      .select('*')
+      .eq('id', questionId)
+      .eq('session_id', sessionId)
+      .maybeSingle();
+    if (qErr || !question) {
+      throw new NotFoundException('Question not found');
+    }
+    if (question.role !== 'assistant') {
+      throw new BadRequestException('questionId must reference an assistant message');
+    }
+
+    const { data: existing } = await this.supabase.admin
+      .from('interview_messages')
+      .select('*')
+      .eq('session_id', sessionId)
+      .eq('turn', question.turn)
+      .eq('role', 'user')
+      .maybeSingle();
+
+    if (existing) {
+      const { data: updated, error: updateErr } = await this.supabase.admin
+        .from('interview_messages')
+        .update({ content })
+        .eq('id', existing.id)
+        .select()
+        .single();
+      if (updateErr || !updated) {
+        throw new BadRequestException(
+          `Failed to update answer: ${updateErr?.message ?? 'unknown'}`,
+        );
+      }
+      return updated;
+    }
+
+    return this.insertMessage(sessionId, question.turn, 'user', content);
+  }
+
   // --- private helpers ---
 
   private async loadOwnedTopic(topicId: string, userId: string): Promise<TopicRow> {

@@ -7,7 +7,9 @@ import { ChannelIcon } from '@/components/ui/ChannelIcon';
 import { Sparkline } from '@/components/ui/Sparkline';
 import { SPARKLINE_DATA } from '@/mocks';
 import { formatNumber } from '@/lib/format';
+import { confirm } from '@/lib/confirm';
 import { AnswerEditModal, type AnswerEditTarget } from './AnswerEditModal';
+import { RegenerateProgressModal } from './RegenerateProgressModal';
 
 const channelInfo = {
   naver: {
@@ -35,19 +37,38 @@ const PREVIEW_COUNT = 3;
 export function DetailOverview({
   content,
   draftId,
+  topicId,
   interview,
   interviewLoading = false,
 }: {
   content: Content;
   draftId: string;
+  topicId: string;
   interview: InterviewSummary | null;
   interviewLoading?: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [editTarget, setEditTarget] = useState<AnswerEditTarget | null>(null);
+  // 답변을 한 번이라도 수정했을 때만 단독 "다시 양산" 버튼을 노출 (양산 완료 시 reset).
+  const [hasEdited, setHasEdited] = useState(false);
+  const [regenOpen, setRegenOpen] = useState(false);
   const qa = interview?.qa ?? [];
   const remainingCount = Math.max(qa.length - PREVIEW_COUNT, 0);
   const visibleQa = expanded ? qa : qa.slice(0, PREVIEW_COUNT);
+
+  // M — 수정한 인터뷰로 카드뉴스/블로그 재생성. confirm(경고) → 진행 모달 open.
+  async function runRegenerate() {
+    if (regenOpen) return;
+    const ok = await confirm({
+      kind: 'unsaved',
+      title: '수정한 인터뷰로 다시 양산할까요?',
+      description: '현재 카드뉴스·블로그는 새 결과로 덮어써져요. (버전 보관 X)',
+      confirmLabel: '다시 양산',
+      cancelLabel: '취소',
+    });
+    if (!ok) return;
+    setRegenOpen(true);
+  }
 
   return (
     <div className="px-7 py-6 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-5">
@@ -108,47 +129,45 @@ export function DetailOverview({
             </div>
           ) : (
             <div className="flex flex-col">
-              {visibleQa.map((item, i) => {
-                const editable = item.answerId !== null && item.answer !== null;
-                return (
-                  <div
-                    key={item.questionId}
-                    onClick={
-                      editable
-                        ? () =>
-                            setEditTarget({
-                              messageId: item.answerId!,
-                              questionNo: i + 1,
-                              question: item.question,
-                              answer: item.answer!,
-                            })
-                        : undefined
-                    }
-                    className={`group px-3.5 py-3 border-t border-border first:border-t-0 flex flex-col gap-1 ${
-                      editable ? 'cursor-pointer hover:bg-surface-2' : ''
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10.5px] font-mono text-text-3 uppercase">
-                        Q{i + 1}
-                      </span>
-                      {editable && (
-                        <Pencil className="w-3 h-3 text-text-3 opacity-0 group-hover:opacity-100" />
-                      )}
-                    </div>
-                    <p className="text-[13px] font-medium text-text">{item.question}</p>
-                    <p className="text-[12px] text-text-2">
-                      {item.answer ?? <span className="text-text-3">답변 없음</span>}
-                    </p>
+              {visibleQa.map((item, i) => (
+                <div
+                  key={item.questionId}
+                  onClick={() =>
+                    setEditTarget({
+                      questionId: item.questionId,
+                      questionNo: i + 1,
+                      question: item.question,
+                      answer: item.answer ?? '',
+                    })
+                  }
+                  className="group px-3.5 py-3 border-t border-border first:border-t-0 flex flex-col gap-1 cursor-pointer hover:bg-surface-2"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10.5px] font-mono text-text-3 uppercase">Q{i + 1}</span>
+                    <Pencil className="w-3 h-3 text-text-3 opacity-0 group-hover:opacity-100" />
                   </div>
-                );
-              })}
+                  <p className="text-[13px] font-medium text-text">{item.question}</p>
+                  <p className="text-[12px] text-text-2">
+                    {item.answer ?? <span className="text-text-3">답변 없음 · 클릭해 추가</span>}
+                  </p>
+                </div>
+              ))}
               {remainingCount > 0 && (
                 <button
                   onClick={() => setExpanded((prev) => !prev)}
                   className="border-t border-border px-3.5 py-2.5 text-[11.5px] text-text-2 hover:bg-surface-2 text-left"
                 >
                   {expanded ? '접기 ↑' : `나머지 ${remainingCount}개 질문 보기 →`}
+                </button>
+              )}
+              {hasEdited && (
+                <button
+                  onClick={() => void runRegenerate()}
+                  disabled={regenOpen}
+                  className="border-t border-border px-3.5 py-2.5 text-[11.5px] font-medium text-accent hover:bg-surface-2 text-left flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  <RotateCw className="w-3 h-3 shrink-0" />
+                  수정한 인터뷰로 다시 양산
                 </button>
               )}
             </div>
@@ -203,8 +222,18 @@ export function DetailOverview({
           draftId={draftId}
           sessionId={interview.sessionId}
           target={editTarget}
+          onSaved={() => setHasEdited(true)}
+          onSaveAndRegenerate={() => void runRegenerate()}
         />
       )}
+
+      <RegenerateProgressModal
+        open={regenOpen}
+        topicId={topicId}
+        draftId={draftId}
+        onClose={() => setRegenOpen(false)}
+        onSuccess={() => setHasEdited(false)}
+      />
     </div>
   );
 }
