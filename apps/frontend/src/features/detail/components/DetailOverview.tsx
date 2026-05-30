@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { ArrowUpRight, Pencil, RotateCw, Download, Copy, Archive } from 'lucide-react';
 import type { Content } from '@/types';
 import type { InterviewSummary } from '@/lib/api/types';
@@ -39,9 +40,10 @@ export function DetailOverview({
   interview: InterviewSummary | null;
   interviewLoading?: boolean;
 }) {
+  const [expanded, setExpanded] = useState(false);
   const qa = interview?.qa ?? [];
-  const previewQa = qa.slice(0, PREVIEW_COUNT);
   const remainingCount = Math.max(qa.length - PREVIEW_COUNT, 0);
+  const visibleQa = expanded ? qa : qa.slice(0, PREVIEW_COUNT);
 
   return (
     <div className="px-7 py-6 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-5">
@@ -102,7 +104,7 @@ export function DetailOverview({
             </div>
           ) : (
             <div className="flex flex-col">
-              {previewQa.map((item, i) => (
+              {visibleQa.map((item, i) => (
                 <div
                   key={item.questionId}
                   className="px-3.5 py-3 border-t border-border first:border-t-0 flex flex-col gap-1"
@@ -117,8 +119,11 @@ export function DetailOverview({
                 </div>
               ))}
               {remainingCount > 0 && (
-                <button className="border-t border-border px-3.5 py-2.5 text-[11.5px] text-text-2 hover:bg-surface-2 text-left">
-                  나머지 {remainingCount}개 질문 보기 →
+                <button
+                  onClick={() => setExpanded((prev) => !prev)}
+                  className="border-t border-border px-3.5 py-2.5 text-[11.5px] text-text-2 hover:bg-surface-2 text-left"
+                >
+                  {expanded ? '접기 ↑' : `나머지 ${remainingCount}개 질문 보기 →`}
                 </button>
               )}
             </div>
