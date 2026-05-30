@@ -7,6 +7,7 @@ import { ChannelIcon } from '@/components/ui/ChannelIcon';
 import { Sparkline } from '@/components/ui/Sparkline';
 import { SPARKLINE_DATA } from '@/mocks';
 import { formatNumber } from '@/lib/format';
+import { AnswerEditModal, type AnswerEditTarget } from './AnswerEditModal';
 
 const channelInfo = {
   naver: {
@@ -33,14 +34,17 @@ const PREVIEW_COUNT = 3;
 
 export function DetailOverview({
   content,
+  draftId,
   interview,
   interviewLoading = false,
 }: {
   content: Content;
+  draftId: string;
   interview: InterviewSummary | null;
   interviewLoading?: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [editTarget, setEditTarget] = useState<AnswerEditTarget | null>(null);
   const qa = interview?.qa ?? [];
   const remainingCount = Math.max(qa.length - PREVIEW_COUNT, 0);
   const visibleQa = expanded ? qa : qa.slice(0, PREVIEW_COUNT);
@@ -104,20 +108,41 @@ export function DetailOverview({
             </div>
           ) : (
             <div className="flex flex-col">
-              {visibleQa.map((item, i) => (
-                <div
-                  key={item.questionId}
-                  className="px-3.5 py-3 border-t border-border first:border-t-0 flex flex-col gap-1"
-                >
-                  <span className="text-[10.5px] font-mono text-text-3 uppercase">
-                    Q{i + 1}
-                  </span>
-                  <p className="text-[13px] font-medium text-text">{item.question}</p>
-                  <p className="text-[12px] text-text-2">
-                    {item.answer ?? <span className="text-text-3">답변 없음</span>}
-                  </p>
-                </div>
-              ))}
+              {visibleQa.map((item, i) => {
+                const editable = item.answerId !== null && item.answer !== null;
+                return (
+                  <div
+                    key={item.questionId}
+                    onClick={
+                      editable
+                        ? () =>
+                            setEditTarget({
+                              messageId: item.answerId!,
+                              questionNo: i + 1,
+                              question: item.question,
+                              answer: item.answer!,
+                            })
+                        : undefined
+                    }
+                    className={`group px-3.5 py-3 border-t border-border first:border-t-0 flex flex-col gap-1 ${
+                      editable ? 'cursor-pointer hover:bg-surface-2' : ''
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10.5px] font-mono text-text-3 uppercase">
+                        Q{i + 1}
+                      </span>
+                      {editable && (
+                        <Pencil className="w-3 h-3 text-text-3 opacity-0 group-hover:opacity-100" />
+                      )}
+                    </div>
+                    <p className="text-[13px] font-medium text-text">{item.question}</p>
+                    <p className="text-[12px] text-text-2">
+                      {item.answer ?? <span className="text-text-3">답변 없음</span>}
+                    </p>
+                  </div>
+                );
+              })}
               {remainingCount > 0 && (
                 <button
                   onClick={() => setExpanded((prev) => !prev)}
@@ -170,6 +195,16 @@ export function DetailOverview({
           </div>
         </Panel>
       </div>
+
+      {interview && (
+        <AnswerEditModal
+          open={editTarget !== null}
+          onClose={() => setEditTarget(null)}
+          draftId={draftId}
+          sessionId={interview.sessionId}
+          target={editTarget}
+        />
+      )}
     </div>
   );
 }
