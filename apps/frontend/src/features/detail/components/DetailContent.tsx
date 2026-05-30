@@ -69,6 +69,8 @@ export function DetailContent() {
           overview: (
             <DetailOverview
               content={content}
+              draftId={id}
+              topicId={draft.topic.id}
               interview={interviewQuery.data ?? null}
               interviewLoading={interviewQuery.isLoading}
             />

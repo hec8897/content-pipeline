@@ -5,6 +5,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Put,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -46,5 +47,15 @@ export class InterviewController {
     @Body() dto: PatchMessageDto,
   ) {
     return this.interview.patchUserMessage(sessionId, messageId, req.user.id, dto.content);
+  }
+
+  @Put(':sessionId/questions/:questionId/answer')
+  upsertAnswer(
+    @Req() req: AuthedRequest,
+    @Param('sessionId', ParseUUIDPipe) sessionId: string,
+    @Param('questionId', ParseUUIDPipe) questionId: string,
+    @Body() dto: PatchMessageDto,
+  ) {
+    return this.interview.upsertAnswer(sessionId, questionId, req.user.id, dto.content);
   }
 }
