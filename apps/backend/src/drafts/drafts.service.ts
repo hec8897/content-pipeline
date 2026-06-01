@@ -22,6 +22,7 @@ import {
 } from './drafts.prompts';
 import {
   type CardNews,
+  type CardNewsCard,
   cardNewsSchema,
   type PatchDraftPayload,
   patchDraftSchema,
@@ -143,10 +144,21 @@ export class DraftsService {
         },
       );
 
+      // Phase 7.5 — 첫 카드(표지) cover AI 이미지를 markReady 전에 채움. 실패해도 텍스트 양산은
+      // 살리고 cover 만 비운 채 ready (사용자가 나중에 수동 재생성). 텍스트 실패만 양산 실패로 간주.
+      const cards = cardResult.value;
+      try {
+        const coverUrl = await this.renderCardImage(userId, draft.id, 0, cards[0], topic.title);
+        cards[0] = { ...cards[0], bg_image: coverUrl };
+      } catch (imgErr) {
+        const message = imgErr instanceof Error ? imgErr.message : 'unknown error';
+        this.logger.warn(`cover image generation failed for draft=${draft.id}: ${message}`);
+      }
+
       const finalTitle = blogResult.value.title || topic.title;
       return await this.markReady(
         draft.id,
-        cardResult.value,
+        cards,
         finalTitle,
         blogResult.value.body,
         blogResult.value.tags,
@@ -180,6 +192,26 @@ export class DraftsService {
     return { draft, cards };
   }
 
+  // Phase 7.5 — 카드 1장 AI 배경 이미지 생성 코어. 프롬프트 빌드 → 생성 → Storage push → public URL.
+  // ready 검증을 밖으로 빼서 양산(generate, 아직 ready 아님)과 regenerate(ready) 양쪽이 공유.
+  private async renderCardImage(
+    userId: string,
+    draftId: string,
+    cardIndex: number,
+    card: CardNewsCard,
+    topicTitle: string,
+  ): Promise<string> {
+    const fullPrompt = `${IMAGE_GEN_SYSTEM}\n\n---\n\n${buildCardImagePrompt(card, topicTitle)}`;
+    const { imageBase64 } = await this.llm.generateImage({ prompt: fullPrompt });
+    return this.storage.uploadCardImage({
+      userId,
+      draftId,
+      cardIndex,
+      body: Buffer.from(imageBase64, 'base64'),
+      contentType: 'image/png', // gpt-image-1 은 PNG b64
+    });
+  }
+
   // Phase 7.5 — AI 배경 이미지 재생성. PNG 결과를 Storage 에 push 후 public URL 반환.
   // DB(card_news[idx].bg_image) 저장은 안 함 — 프론트가 편집 상태로 들고 있다 PATCH 때 영속화.
   async regenerateCardImage(
@@ -188,19 +220,14 @@ export class DraftsService {
     cardIndex: number,
   ): Promise<{ imageUrl: string }> {
     const { draft, cards } = await this.requireOwnedReadyDraftForCard(draftId, userId, cardIndex);
-    const card = cards[cardIndex];
-
     const topic = await this.loadOwnedTopic(draft.topic_id, userId);
-    const fullPrompt = `${IMAGE_GEN_SYSTEM}\n\n---\n\n${buildCardImagePrompt(card, topic.title)}`;
-    const { imageBase64 } = await this.llm.generateImage({ prompt: fullPrompt });
-
-    const imageUrl = await this.storage.uploadCardImage({
+    const imageUrl = await this.renderCardImage(
       userId,
       draftId,
       cardIndex,
-      body: Buffer.from(imageBase64, 'base64'),
-      contentType: 'image/png', // gpt-image-1 은 PNG b64
-    });
+      cards[cardIndex],
+      topic.title,
+    );
     return { imageUrl };
   }
 
