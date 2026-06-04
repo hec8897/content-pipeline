@@ -78,8 +78,11 @@ export function DetailContent() {
           insta: (
             <DetailInsta
               contentId={content.id}
+              draftId={id}
+              status={draft.status}
               topicTitle={draft.topic.title}
               cards={draft.card_news ?? []}
+              caption={draft.caption}
             />
           ),
           blog: (

@@ -1,27 +1,52 @@
+'use client';
+
 import Link from 'next/link';
-import { Pencil } from 'lucide-react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Loader2, Pencil, RotateCw, Sparkles } from 'lucide-react';
 import { CardNewsView } from './CardNewsView';
 import { Panel } from '@/components/ui/Panel';
 import { PngExportButton } from '@/features/insta-export/components/PngExportButton';
-import type { CardNewsCardData } from '@/lib/api/types';
+import { ApiError } from '@/lib/api/client';
+import { draftsApi } from '@/lib/api/drafts';
+import { qk } from '@/lib/api/queryKeys';
+import { toast } from '@/lib/toast';
+import type { CardNewsCardData, DraftStatus } from '@/lib/api/types';
 import { routes } from '@/lib/routes';
 
-// 캡션은 발행 phase 까지 mock 유지. blog_tags 와 별도 컬럼이라 본 phase 에선 안 채움.
-const CAPTION_MOCK = `🐶 5살 푸들 입양한 지 한 달, 1인 가구가 알게 된 것들
+type Props = {
+  contentId: string;
+  draftId: string;
+  status: DraftStatus;
+  topicTitle: string;
+  cards: CardNewsCardData[];
+  caption: string | null;
+};
 
-성견 입양 = '키우는' 게 아니라 '함께 적응해가는' 일.
-적응 기간은 길어요. 조급해하지 마세요.
-
-자세한 후기는 프로필 링크에서 네이버 블로그로 ↗
-#성견입양 #1인가구 #푸들 #반려견일상 #입양후기`;
-
-type Props = { contentId: string; topicTitle: string; cards: CardNewsCardData[] };
-
-export function DetailInsta({ contentId, topicTitle, cards }: Props) {
+export function DetailInsta({ contentId, draftId, status, topicTitle, cards, caption }: Props) {
   // CardNewsCardData (API) → CardNewsCard (id 보강). DetailInsta 는 read-only 라
   // 인덱스 기반 id 안전. prefix 로 안티패턴 시각적 신호 줄임 + 그리드/캡처가 같은
   // 객체 참조.
   const viewCards = cards.map((c, i) => ({ ...c, id: `card-${i}` }));
+
+  const qc = useQueryClient();
+  const regen = useMutation({
+    mutationFn: () => draftsApi.regenerateCaption(draftId),
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: qk.drafts() });
+      toast.success('캡션 생성 완료', { msg: '새 인스타 캡션으로 갱신됐어요.' });
+    },
+    onError: (e) => {
+      toast.error('캡션 생성 실패', {
+        msg: e instanceof ApiError ? e.message : '잠시 후 다시 시도해주세요.',
+      });
+    },
+  });
+
+  const hasCaption = caption !== null && caption.trim().length > 0;
+  // 캡션 재생성은 ready draft 에서만. 양산 중(generating)엔 caption 이 reset 돼 빈 상태가
+  // 보이는데, 이때 버튼을 누르면 백엔드가 'not ready' 로 막으므로 아예 비노출.
+  const canRegen = status === 'ready';
+
   return (
     <div className="px-7 py-6 flex flex-col gap-5">
       <div className="flex items-center justify-between gap-3">
@@ -47,10 +72,58 @@ export function DetailInsta({ contentId, topicTitle, cards }: Props) {
         </div>
       )}
 
-      <Panel title="캡션">
-        <pre className="px-3.5 py-3 text-[12.5px] text-text-2 whitespace-pre-wrap font-sans leading-relaxed">
-          {CAPTION_MOCK}
-        </pre>
+      <Panel
+        title="캡션"
+        actions={
+          hasCaption && canRegen ? (
+            <button
+              type="button"
+              onClick={() => regen.mutate()}
+              disabled={regen.isPending}
+              className="inline-flex items-center gap-1.5 text-[12px] text-text-2 hover:text-text disabled:opacity-50"
+            >
+              {regen.isPending ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <RotateCw className="w-3.5 h-3.5" />
+              )}
+              다시 생성
+            </button>
+          ) : undefined
+        }
+      >
+        {hasCaption ? (
+          <pre className="px-3.5 py-3 text-[12.5px] text-text-2 whitespace-pre-wrap font-sans leading-relaxed">
+            {caption}
+          </pre>
+        ) : (
+          <div className="px-3.5 py-6 flex flex-col items-center gap-3 text-center">
+            {canRegen ? (
+              <>
+                <p className="text-[12.5px] text-text-3">캡션이 아직 없어요.</p>
+                <button
+                  type="button"
+                  onClick={() => regen.mutate()}
+                  disabled={regen.isPending}
+                  className="inline-flex items-center gap-1.5 bg-text text-white rounded-md px-3 py-2 text-[12.5px] font-semibold hover:bg-black disabled:opacity-50"
+                >
+                  {regen.isPending ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Sparkles className="w-3.5 h-3.5" />
+                  )}
+                  캡션 생성
+                </button>
+              </>
+            ) : (
+              <p className="text-[12.5px] text-text-3">
+                {status === 'generating'
+                  ? '양산이 끝나면 캡션이 채워져요.'
+                  : '캡션을 생성하려면 먼저 양산을 완료해주세요.'}
+              </p>
+            )}
+          </div>
+        )}
       </Panel>
     </div>
   );

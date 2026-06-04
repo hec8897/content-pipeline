@@ -17,6 +17,7 @@ export type Database = {
           blog_body: string | null;
           blog_tags: string[];
           blog_title: string | null;
+          caption: string | null;
           card_news: Json | null;
           created_at: string;
           error_reason: string | null;
@@ -32,6 +33,7 @@ export type Database = {
           blog_body?: string | null;
           blog_tags?: string[];
           blog_title?: string | null;
+          caption?: string | null;
           card_news?: Json | null;
           created_at?: string;
           error_reason?: string | null;
@@ -47,6 +49,7 @@ export type Database = {
           blog_body?: string | null;
           blog_tags?: string[];
           blog_title?: string | null;
+          caption?: string | null;
           card_news?: Json | null;
           created_at?: string;
           error_reason?: string | null;

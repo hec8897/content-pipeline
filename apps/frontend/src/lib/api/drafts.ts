@@ -38,6 +38,11 @@ export const draftsApi = {
     return res.data;
   },
 
+  async regenerateCaption(draftId: string): Promise<Draft> {
+    const res = await api.post<Draft>(`/drafts/${draftId}/caption/regenerate`);
+    return res.data;
+  },
+
   async getInterview(draftId: string): Promise<InterviewSummary | null> {
     const res = await api.get<InterviewSummary | null>(`/drafts/${draftId}/interview`);
     return res.data;
