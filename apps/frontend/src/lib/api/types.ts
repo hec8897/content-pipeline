@@ -80,6 +80,7 @@ export interface Draft {
   blog_title: string | null;
   blog_body: string | null;
   blog_tags: string[];
+  caption: string | null;
   error_reason: string | null;
   model_used: string | null;
   generated_at: string | null;
@@ -99,6 +100,7 @@ export interface DraftListItem {
   blog_title: string | null;
   blog_body: string | null;
   blog_tags: string[];
+  caption: string | null;
   card_news: CardNewsCardData[] | null;
   created_at: string;
   updated_at: string;

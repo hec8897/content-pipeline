@@ -16,6 +16,7 @@ import { SupabaseService } from '@/supabase/supabase.service';
 import {
   IMAGE_GEN_SYSTEM,
   buildBlogPrompt,
+  buildCaptionPrompt,
   buildCardImagePrompt,
   buildCardNewsPrompt,
   parseBlogMarkdown,
@@ -97,7 +98,7 @@ export class DraftsService {
     const { data, error } = await this.supabase.admin
       .from('drafts')
       .select(
-        'id, status, blog_title, blog_body, blog_tags, card_news, created_at, updated_at, topic:topics!inner(id, title)',
+        'id, status, blog_title, blog_body, blog_tags, caption, card_news, created_at, updated_at, topic:topics!inner(id, title)',
       )
       .eq('user_id', userId)
       .order('updated_at', { ascending: false });
@@ -125,11 +126,17 @@ export class DraftsService {
     try {
       const cardResult = await this.llm.generateValidated(
         buildCardNewsPrompt(topic.title, history),
-        (raw) => {
-          // jsonMode 라 LLM 응답은 { cards: [...] } object. cards 필드 추출 후 tuple 검증.
-          const parsed = JSON.parse(raw) as { cards?: unknown };
+        (raw): { cards: CardNews; caption: string | null } => {
+          // jsonMode 라 LLM 응답은 { cards: [...], caption: "..." } object.
+          const parsed = JSON.parse(raw) as { cards?: unknown; caption?: unknown };
           if (!parsed.cards) throw new Error('missing cards field in LLM response');
-          return cardNewsSchema.parse(parsed.cards);
+          const cards = cardNewsSchema.parse(parsed.cards);
+          // caption 은 optional 격리 — 누락/오형식이면 null, 카드 양산은 살림 (B-04).
+          const caption =
+            typeof parsed.caption === 'string' && parsed.caption.trim().length > 0
+              ? parsed.caption.trim()
+              : null;
+          return { cards, caption };
         },
       );
 
@@ -146,7 +153,7 @@ export class DraftsService {
 
       // Phase 7.5 — 첫 카드(표지) cover AI 이미지를 markReady 전에 채움. 실패해도 텍스트 양산은
       // 살리고 cover 만 비운 채 ready (사용자가 나중에 수동 재생성). 텍스트 실패만 양산 실패로 간주.
-      const cards = cardResult.value;
+      const { cards, caption } = cardResult.value;
       try {
         const coverUrl = await this.renderCardImage(userId, draft.id, 0, cards[0], topic.title);
         cards[0] = { ...cards[0], bg_image: coverUrl };
@@ -162,6 +169,7 @@ export class DraftsService {
         finalTitle,
         blogResult.value.body,
         blogResult.value.tags,
+        caption,
         `card=${cardResult.modelUsed},blog=${blogResult.modelUsed}`,
       );
     } catch (err) {
@@ -251,6 +259,39 @@ export class DraftsService {
     return { imageUrl };
   }
 
+  // B-04 캡션 수동 재생성 — 카드 호출과 분리한 독립 경로. ready draft 대상, 기존 cards 를
+  // 컨텍스트로 넘겨 현재 카드와 정합한 캡션을 만들고 caption 컬럼만 갱신. 실패 시 generateValidated
+  // 가 503 을 던져 프론트 toast 에러로 이어지고 기존 캡션은 보존(여기서 update 안 함).
+  async regenerateCaption(draftId: string, userId: string): Promise<DraftRow> {
+    const draft = await this.loadOwnedDraft(draftId, userId);
+    if (draft.status !== 'ready') {
+      throw new BadRequestException('Draft is not ready');
+    }
+    const topic = await this.loadOwnedTopic(draft.topic_id, userId);
+    const history = await this.loadHistory(draft.topic_id);
+    const cards = (draft.card_news as CardNews | null) ?? undefined;
+
+    const { value: caption } = await this.llm.generateValidated(
+      buildCaptionPrompt(topic.title, history, cards),
+      (raw) => {
+        const text = raw.trim();
+        if (text.length === 0) throw new Error('empty caption');
+        return text;
+      },
+    );
+
+    const { data, error } = await this.supabase.admin
+      .from('drafts')
+      .update({ caption })
+      .eq('id', draftId)
+      .select()
+      .single();
+    if (error || !data) {
+      throw new BadRequestException(`Failed to update caption: ${error?.message ?? 'unknown'}`);
+    }
+    return data;
+  }
+
   async patch(draftId: string, userId: string, payload: unknown): Promise<DraftRow> {
     const draft = await this.loadOwnedDraft(draftId, userId);
     if (draft.status !== 'ready') {
@@ -331,6 +372,16 @@ export class DraftsService {
     return data;
   }
 
+  // 최신 인터뷰 세션의 메시지를 LLM history 형태로. 세션 없으면(스킵) 빈 배열. caption 재생성 등에서 재사용.
+  private async loadHistory(topicId: string): Promise<InterviewHistoryItem[]> {
+    const session = await this.loadLatestSession(topicId);
+    if (!session) return [];
+    return (await this.loadMessages(session.id)).map((m) => ({
+      role: m.role as 'assistant' | 'user',
+      content: m.content,
+    }));
+  }
+
   private async loadMessages(sessionId: string): Promise<MessageRow[]> {
     const { data, error } = await this.supabase.admin
       .from('interview_messages')
@@ -353,6 +404,7 @@ export class DraftsService {
           blog_title: null,
           blog_body: null,
           blog_tags: [],
+          caption: null,
           error_reason: null,
           model_used: null,
           generated_at: null,
@@ -382,6 +434,7 @@ export class DraftsService {
     blogTitle: string,
     blogBody: string,
     blogTags: string[],
+    caption: string | null,
     modelUsed: string,
   ): Promise<DraftRow> {
     const { data, error } = await this.supabase.admin
@@ -392,6 +445,7 @@ export class DraftsService {
         blog_title: blogTitle,
         blog_body: blogBody,
         blog_tags: blogTags,
+        caption,
         model_used: modelUsed,
         generated_at: new Date().toISOString(),
         error_reason: null,

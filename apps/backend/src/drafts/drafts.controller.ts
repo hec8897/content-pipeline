@@ -50,6 +50,11 @@ export class DraftsController {
     return this.drafts.patch(id, req.user.id, dto);
   }
 
+  @Post(':id/caption/regenerate')
+  regenerateCaption(@Req() req: AuthedRequest, @Param('id', ParseUUIDPipe) id: string) {
+    return this.drafts.regenerateCaption(id, req.user.id);
+  }
+
   @Post(':id/cards/:index/regenerate-image')
   regenerateCardImage(
     @Req() req: AuthedRequest,
