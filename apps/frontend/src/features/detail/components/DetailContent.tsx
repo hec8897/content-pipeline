@@ -23,6 +23,11 @@ export function DetailContent() {
     queryKey: qk.drafts(),
     queryFn: () => draftsApi.list(),
   });
+  const interviewQuery = useQuery({
+    queryKey: qk.draftInterview(id),
+    queryFn: () => draftsApi.getInterview(id),
+    enabled: Boolean(id),
+  });
 
   if (query.isLoading) {
     return <div className="px-7 py-16 text-[13px] text-text-3 text-center">불러오는 중…</div>;
@@ -61,12 +66,23 @@ export function DetailContent() {
       <DetailHero content={content} />
       <DetailTabs
         panels={{
-          overview: <DetailOverview content={content} />,
+          overview: (
+            <DetailOverview
+              content={content}
+              draftId={id}
+              topicId={draft.topic.id}
+              interview={interviewQuery.data ?? null}
+              interviewLoading={interviewQuery.isLoading}
+            />
+          ),
           insta: (
             <DetailInsta
               contentId={content.id}
+              draftId={id}
+              status={draft.status}
               topicTitle={draft.topic.title}
               cards={draft.card_news ?? []}
+              caption={draft.caption}
             />
           ),
           blog: (

@@ -1,5 +1,11 @@
 import { api } from './client';
-import type { Draft, DraftListItem, DraftWithTopic, PatchDraftPayload } from './types';
+import type {
+  Draft,
+  DraftListItem,
+  DraftWithTopic,
+  InterviewSummary,
+  PatchDraftPayload,
+} from './types';
 
 export const draftsApi = {
   async list(): Promise<DraftListItem[]> {
@@ -25,9 +31,33 @@ export const draftsApi = {
   async regenerateCardImage(
     draftId: string,
     cardIndex: number,
-  ): Promise<{ imageBase64: string }> {
-    const res = await api.post<{ imageBase64: string }>(
+  ): Promise<{ imageUrl: string }> {
+    const res = await api.post<{ imageUrl: string }>(
       `/drafts/${draftId}/cards/${cardIndex}/regenerate-image`,
+    );
+    return res.data;
+  },
+
+  async regenerateCaption(draftId: string): Promise<Draft> {
+    const res = await api.post<Draft>(`/drafts/${draftId}/caption/regenerate`);
+    return res.data;
+  },
+
+  async getInterview(draftId: string): Promise<InterviewSummary | null> {
+    const res = await api.get<InterviewSummary | null>(`/drafts/${draftId}/interview`);
+    return res.data;
+  },
+
+  async uploadCardImage(
+    draftId: string,
+    cardIndex: number,
+    file: File,
+  ): Promise<{ imageUrl: string }> {
+    const form = new FormData();
+    form.append('file', file);
+    const res = await api.post<{ imageUrl: string }>(
+      `/drafts/${draftId}/cards/${cardIndex}/upload-image`,
+      form,
     );
     return res.data;
   },

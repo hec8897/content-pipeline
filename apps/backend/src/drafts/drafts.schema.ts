@@ -26,6 +26,9 @@ const FG_VALUES = ['white', '#222', '#3a2e0c'] as const;
 const bgEnum = z.enum(BG_VALUES);
 const fgEnum = z.enum(FG_VALUES);
 
+// Phase 7.5 — 카드 배경 이미지 Storage public URL. AI 재생성/사용자 업로드 결과.
+const bgImage = z.string().url().optional();
+
 const coverCardSchema = z.object({
   type: z.literal('cover'),
   title: z.string().min(1).max(80),
@@ -33,6 +36,7 @@ const coverCardSchema = z.object({
   tag: z.string().min(1).max(40).optional(),
   bg: bgEnum,
   fg: fgEnum,
+  bg_image: bgImage,
 });
 
 // num 은 위치 = 번호 불변량을 zod 에서 강제 (튜플 인덱스 → 리터럴 매칭).
@@ -44,6 +48,7 @@ const makeBodyCardSchema = (num: '01' | '02' | '03' | '04' | '05' | '06') =>
     body: z.string().min(1).max(200),
     bg: bgEnum,
     fg: fgEnum,
+    bg_image: bgImage,
   });
 
 const outroCardSchema = z.object({
@@ -53,6 +58,7 @@ const outroCardSchema = z.object({
   cta: z.string().min(1).max(60).optional(),
   bg: bgEnum,
   fg: fgEnum,
+  bg_image: bgImage,
 });
 
 // 양산(generate) 단계 — LLM 출력 검증. 정확히 cover + body01~06 + outro 8장 tuple.
@@ -82,6 +88,7 @@ const editCoverSchema = z.object({
   tag: z.string().min(1).max(40).optional(),
   bg: editColor,
   fg: editColor,
+  bg_image: bgImage,
 });
 const editBodySchema = z.object({
   type: z.literal('body'),
@@ -90,6 +97,7 @@ const editBodySchema = z.object({
   body: z.string().min(1).max(200),
   bg: editColor,
   fg: editColor,
+  bg_image: bgImage,
 });
 const editOutroSchema = z.object({
   type: z.literal('outro'),
@@ -98,6 +106,7 @@ const editOutroSchema = z.object({
   cta: z.string().min(1).max(60).optional(),
   bg: editColor,
   fg: editColor,
+  bg_image: bgImage,
 });
 
 const cardNewsEditSchema = z

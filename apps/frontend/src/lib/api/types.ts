@@ -67,6 +67,8 @@ export interface CardNewsCardData {
   cta?: string;
   bg: string;
   fg: string;
+  // Phase 7.5 — 카드 배경 이미지 Storage public URL. PATCH 로 영속화됨.
+  bg_image?: string;
 }
 
 export interface Draft {
@@ -78,6 +80,7 @@ export interface Draft {
   blog_title: string | null;
   blog_body: string | null;
   blog_tags: string[];
+  caption: string | null;
   error_reason: string | null;
   model_used: string | null;
   generated_at: string | null;
@@ -97,6 +100,7 @@ export interface DraftListItem {
   blog_title: string | null;
   blog_body: string | null;
   blog_tags: string[];
+  caption: string | null;
   card_news: CardNewsCardData[] | null;
   created_at: string;
   updated_at: string;
@@ -104,6 +108,19 @@ export interface DraftListItem {
     id: string;
     title: string;
   };
+}
+
+export interface InterviewQAItem {
+  questionId: string;
+  question: string;
+  answerId: string | null;
+  answer: string | null;
+}
+
+export interface InterviewSummary {
+  sessionId: string;
+  status: SessionStatus;
+  qa: InterviewQAItem[];
 }
 
 export interface PatchDraftPayload {

@@ -18,6 +18,15 @@ const SYSTEM_INSTRUCTION = `당신은 한국어로 글 쓰는 1인 콘텐츠 작
 
 const PALETTE_HINT = PALETTE_PAIRS.map((p, i) => `${i + 1}. bg="${p.bg}", fg="${p.fg}"`).join('\n');
 
+// B-04 캡션 포맷 — 카드 호출에 끼워넣는 경로(buildCardNewsPrompt)와 독립 재생성 경로
+// (buildCaptionPrompt)가 같은 정의를 참조해 톤/형식 drift 방지.
+const CAPTION_FORMAT = `캡션 형식 (인스타 피드용):
+- 첫 줄: 이모지 1개 + 주제를 압축한 훅 한 줄.
+- 빈 줄 후 핵심 인사이트/경험 2~3줄. transcript 의 구체적 디테일 우선, 짧게.
+- 빈 줄 후 CTA 한 줄: "자세한 후기는 프로필 링크에서 네이버 블로그로 ↗".
+- 마지막 줄: 해시태그 5~6개. 공백 구분, 각 태그 앞 #, 태그 안 띄어쓰기 X (예: #성견입양 #1인가구).
+- 광고 톤·AI 가 쓴 티 금지. 줄바꿈은 실제 개행("\\n")으로.`;
+
 export function serializeTranscript(history: InterviewHistoryItem[]): string {
   const pairs: string[] = [];
   let pendingQ: string | null = null;
@@ -52,7 +61,7 @@ export function buildCardNewsPrompt(topic: string, history: InterviewHistoryItem
 
 위 인풋을 바탕으로 인스타 카드뉴스 8장을 만들어줘.
 
-출력은 JSON 객체 한 개. "cards" 라는 단일 키, 그 값이 정확히 8개 요소 배열.
+출력은 JSON 객체 한 개. 키 두 개: "cards" (정확히 8개 요소 배열), "caption" (문자열).
 
 cards 배열 구성 (인덱스 = 슬라이드 번호):
 - [0] 표지: { "type": "cover", "title": string, "subtitle"?: string, "tag"?: string, "bg": string, "fg": string }
@@ -68,7 +77,44 @@ cards 배열 구성 (인덱스 = 슬라이드 번호):
 bg/fg 는 아래 7쌍 중 하나만 페어 단위로 골라 (다른 hex 절대 금지):
 ${PALETTE_HINT}
 
+"caption" 은 위 카드뉴스를 인스타에 올릴 때 함께 붙일 캡션 글.
+${CAPTION_FORMAT}
+
 설명, 코드 펜스, 헤더 일체 금지.`,
+      },
+    ],
+  };
+}
+
+// B-04 캡션 독립 재생성 경로 — 카드 호출과 분리해 캡션만 다시 생성. 같은 SYSTEM_INSTRUCTION
+// (가드레일) + CAPTION_FORMAT 사용. 기존 cards 가 있으면 캡션이 현재 카드와 정합하도록 컨텍스트로 포함.
+export function buildCaptionPrompt(
+  topic: string,
+  history: InterviewHistoryItem[],
+  cards?: CardNewsCard[],
+): LlmRequest {
+  const cardContext =
+    cards && cards.length > 0
+      ? `\n\n이미 만들어진 카드뉴스 텍스트 (캡션이 이 내용과 정합해야 함):\n${cards
+          .map((c) => {
+            const body = 'body' in c && c.body ? ` — ${c.body}` : '';
+            return `· ${c.title}${body}`;
+          })
+          .join('\n')}`
+      : '';
+  return {
+    system: SYSTEM_INSTRUCTION,
+    temperature: 0.7,
+    messages: [
+      {
+        role: 'user',
+        content: `${buildInputBlock(topic, history)}${cardContext}
+
+위 인풋(과 카드뉴스)을 바탕으로 인스타 카드뉴스에 붙일 캡션 글 하나만 써줘.
+
+${CAPTION_FORMAT}
+
+캡션 본문만 출력. JSON, 설명, 코드 펜스, 헤더 일체 금지.`,
       },
     ],
   };

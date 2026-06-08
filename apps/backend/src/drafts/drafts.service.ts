@@ -9,18 +9,21 @@ import {
 
 import type { InterviewHistoryItem } from '@/interview/interview.prompts';
 import { LlmService } from '@/llm/llm.service';
+import { StorageService } from '@/storage/storage.service';
 import type { Database } from '@/supabase/database.types';
 import { SupabaseService } from '@/supabase/supabase.service';
 
 import {
   IMAGE_GEN_SYSTEM,
   buildBlogPrompt,
+  buildCaptionPrompt,
   buildCardImagePrompt,
   buildCardNewsPrompt,
   parseBlogMarkdown,
 } from './drafts.prompts';
 import {
   type CardNews,
+  type CardNewsCard,
   cardNewsSchema,
   type PatchDraftPayload,
   patchDraftSchema,
@@ -36,6 +39,19 @@ export interface DraftState {
   draft: DraftRow | null;
 }
 
+export interface InterviewQA {
+  questionId: string;
+  question: string;
+  answerId: string | null;
+  answer: string | null;
+}
+
+export interface InterviewSummary {
+  sessionId: string;
+  status: SessionRow['status'];
+  qa: InterviewQA[];
+}
+
 @Injectable()
 export class DraftsService {
   private readonly logger = new Logger(DraftsService.name);
@@ -43,6 +59,7 @@ export class DraftsService {
   constructor(
     private readonly supabase: SupabaseService,
     private readonly llm: LlmService,
+    private readonly storage: StorageService,
   ) {}
 
   async getForTopic(topicId: string, userId: string): Promise<DraftState> {
@@ -51,11 +68,37 @@ export class DraftsService {
     return { topic, draft };
   }
 
+  async getInterviewForDraft(draftId: string, userId: string): Promise<InterviewSummary | null> {
+    const draft = await this.loadOwnedDraft(draftId, userId);
+    const session = await this.loadLatestSession(draft.topic_id);
+    if (!session) return null;
+
+    const messages = await this.loadMessages(session.id);
+    const byTurn = new Map<number, { question?: MessageRow; answer?: MessageRow }>();
+    for (const m of messages) {
+      const slot = byTurn.get(m.turn) ?? {};
+      if (m.role === 'assistant') slot.question = m;
+      else slot.answer = m;
+      byTurn.set(m.turn, slot);
+    }
+    const qa: InterviewQA[] = Array.from(byTurn.entries())
+      .sort(([a], [b]) => a - b)
+      .filter(([, slot]) => slot.question)
+      .map(([, slot]) => ({
+        questionId: slot.question!.id,
+        question: slot.question!.content,
+        answerId: slot.answer?.id ?? null,
+        answer: slot.answer?.content ?? null,
+      }));
+
+    return { sessionId: session.id, status: session.status, qa };
+  }
+
   async listForUser(userId: string) {
     const { data, error } = await this.supabase.admin
       .from('drafts')
       .select(
-        'id, status, blog_title, blog_body, blog_tags, card_news, created_at, updated_at, topic:topics!inner(id, title)',
+        'id, status, blog_title, blog_body, blog_tags, caption, card_news, created_at, updated_at, topic:topics!inner(id, title)',
       )
       .eq('user_id', userId)
       .order('updated_at', { ascending: false });
@@ -83,11 +126,17 @@ export class DraftsService {
     try {
       const cardResult = await this.llm.generateValidated(
         buildCardNewsPrompt(topic.title, history),
-        (raw) => {
-          // jsonMode 라 LLM 응답은 { cards: [...] } object. cards 필드 추출 후 tuple 검증.
-          const parsed = JSON.parse(raw) as { cards?: unknown };
+        (raw): { cards: CardNews; caption: string | null } => {
+          // jsonMode 라 LLM 응답은 { cards: [...], caption: "..." } object.
+          const parsed = JSON.parse(raw) as { cards?: unknown; caption?: unknown };
           if (!parsed.cards) throw new Error('missing cards field in LLM response');
-          return cardNewsSchema.parse(parsed.cards);
+          const cards = cardNewsSchema.parse(parsed.cards);
+          // caption 은 optional 격리 — 누락/오형식이면 null, 카드 양산은 살림 (B-04).
+          const caption =
+            typeof parsed.caption === 'string' && parsed.caption.trim().length > 0
+              ? parsed.caption.trim()
+              : null;
+          return { cards, caption };
         },
       );
 
@@ -102,13 +151,25 @@ export class DraftsService {
         },
       );
 
+      // Phase 7.5 — 첫 카드(표지) cover AI 이미지를 markReady 전에 채움. 실패해도 텍스트 양산은
+      // 살리고 cover 만 비운 채 ready (사용자가 나중에 수동 재생성). 텍스트 실패만 양산 실패로 간주.
+      const { cards, caption } = cardResult.value;
+      try {
+        const coverUrl = await this.renderCardImage(userId, draft.id, 0, cards[0], topic.title);
+        cards[0] = { ...cards[0], bg_image: coverUrl };
+      } catch (imgErr) {
+        const message = imgErr instanceof Error ? imgErr.message : 'unknown error';
+        this.logger.warn(`cover image generation failed for draft=${draft.id}: ${message}`);
+      }
+
       const finalTitle = blogResult.value.title || topic.title;
       return await this.markReady(
         draft.id,
-        cardResult.value,
+        cards,
         finalTitle,
         blogResult.value.body,
         blogResult.value.tags,
+        caption,
         `card=${cardResult.modelUsed},blog=${blogResult.modelUsed}`,
       );
     } catch (err) {
@@ -119,17 +180,16 @@ export class DraftsService {
     }
   }
 
-  // Phase 6 — 모든 카드 AI 배경 이미지 재생성 허용. 응답은 클라 in-memory 만 (DB 저장 X).
-  async regenerateCardImage(
+  // Phase 7.5 — 카드 이미지 재생성/업로드 공통 검증. ready 상태 + 본인 소유 + index 범위.
+  private async requireOwnedReadyDraftForCard(
     draftId: string,
     userId: string,
     cardIndex: number,
-  ): Promise<{ imageBase64: string }> {
+  ): Promise<{ draft: DraftRow; cards: CardNews }> {
     const draft = await this.loadOwnedDraft(draftId, userId);
     if (draft.status !== 'ready') {
       throw new BadRequestException('Draft is not ready');
     }
-
     const cards = draft.card_news as CardNews | null;
     if (!cards || !Array.isArray(cards)) {
       throw new BadRequestException('Draft has no card_news');
@@ -137,12 +197,99 @@ export class DraftsService {
     if (cardIndex < 0 || cardIndex >= cards.length) {
       throw new BadRequestException(`cardIndex ${cardIndex} out of range`);
     }
-    const card = cards[cardIndex];
+    return { draft, cards };
+  }
 
-    const topic = await this.loadOwnedTopic(draft.topic_id, userId);
-    const fullPrompt = `${IMAGE_GEN_SYSTEM}\n\n---\n\n${buildCardImagePrompt(card, topic.title)}`;
+  // Phase 7.5 — 카드 1장 AI 배경 이미지 생성 코어. 프롬프트 빌드 → 생성 → Storage push → public URL.
+  // ready 검증을 밖으로 빼서 양산(generate, 아직 ready 아님)과 regenerate(ready) 양쪽이 공유.
+  private async renderCardImage(
+    userId: string,
+    draftId: string,
+    cardIndex: number,
+    card: CardNewsCard,
+    topicTitle: string,
+  ): Promise<string> {
+    const fullPrompt = `${IMAGE_GEN_SYSTEM}\n\n---\n\n${buildCardImagePrompt(card, topicTitle)}`;
     const { imageBase64 } = await this.llm.generateImage({ prompt: fullPrompt });
-    return { imageBase64 };
+    return this.storage.uploadCardImage({
+      userId,
+      draftId,
+      cardIndex,
+      body: Buffer.from(imageBase64, 'base64'),
+      contentType: 'image/png', // gpt-image-1 은 PNG b64
+    });
+  }
+
+  // Phase 7.5 — AI 배경 이미지 재생성. PNG 결과를 Storage 에 push 후 public URL 반환.
+  // DB(card_news[idx].bg_image) 저장은 안 함 — 프론트가 편집 상태로 들고 있다 PATCH 때 영속화.
+  async regenerateCardImage(
+    draftId: string,
+    userId: string,
+    cardIndex: number,
+  ): Promise<{ imageUrl: string }> {
+    const { draft, cards } = await this.requireOwnedReadyDraftForCard(draftId, userId, cardIndex);
+    const topic = await this.loadOwnedTopic(draft.topic_id, userId);
+    const imageUrl = await this.renderCardImage(
+      userId,
+      draftId,
+      cardIndex,
+      cards[cardIndex],
+      topic.title,
+    );
+    return { imageUrl };
+  }
+
+  // Phase 7.5 — 사용자 업로드 이미지를 Storage 에 push 후 public URL 반환. regenerate 와 동일하게 DB 미저장.
+  async uploadCardImage(args: {
+    draftId: string;
+    userId: string;
+    cardIndex: number;
+    body: Buffer;
+    contentType: string;
+  }): Promise<{ imageUrl: string }> {
+    await this.requireOwnedReadyDraftForCard(args.draftId, args.userId, args.cardIndex);
+
+    const imageUrl = await this.storage.uploadCardImage({
+      userId: args.userId,
+      draftId: args.draftId,
+      cardIndex: args.cardIndex,
+      body: args.body,
+      contentType: args.contentType,
+    });
+    return { imageUrl };
+  }
+
+  // B-04 캡션 수동 재생성 — 카드 호출과 분리한 독립 경로. ready draft 대상, 기존 cards 를
+  // 컨텍스트로 넘겨 현재 카드와 정합한 캡션을 만들고 caption 컬럼만 갱신. 실패 시 generateValidated
+  // 가 503 을 던져 프론트 toast 에러로 이어지고 기존 캡션은 보존(여기서 update 안 함).
+  async regenerateCaption(draftId: string, userId: string): Promise<DraftRow> {
+    const draft = await this.loadOwnedDraft(draftId, userId);
+    if (draft.status !== 'ready') {
+      throw new BadRequestException('Draft is not ready');
+    }
+    const topic = await this.loadOwnedTopic(draft.topic_id, userId);
+    const history = await this.loadHistory(draft.topic_id);
+    const cards = (draft.card_news as CardNews | null) ?? undefined;
+
+    const { value: caption } = await this.llm.generateValidated(
+      buildCaptionPrompt(topic.title, history, cards),
+      (raw) => {
+        const text = raw.trim();
+        if (text.length === 0) throw new Error('empty caption');
+        return text;
+      },
+    );
+
+    const { data, error } = await this.supabase.admin
+      .from('drafts')
+      .update({ caption })
+      .eq('id', draftId)
+      .select()
+      .single();
+    if (error || !data) {
+      throw new BadRequestException(`Failed to update caption: ${error?.message ?? 'unknown'}`);
+    }
+    return data;
   }
 
   async patch(draftId: string, userId: string, payload: unknown): Promise<DraftRow> {
@@ -225,6 +372,16 @@ export class DraftsService {
     return data;
   }
 
+  // 최신 인터뷰 세션의 메시지를 LLM history 형태로. 세션 없으면(스킵) 빈 배열. caption 재생성 등에서 재사용.
+  private async loadHistory(topicId: string): Promise<InterviewHistoryItem[]> {
+    const session = await this.loadLatestSession(topicId);
+    if (!session) return [];
+    return (await this.loadMessages(session.id)).map((m) => ({
+      role: m.role as 'assistant' | 'user',
+      content: m.content,
+    }));
+  }
+
   private async loadMessages(sessionId: string): Promise<MessageRow[]> {
     const { data, error } = await this.supabase.admin
       .from('interview_messages')
@@ -247,6 +404,7 @@ export class DraftsService {
           blog_title: null,
           blog_body: null,
           blog_tags: [],
+          caption: null,
           error_reason: null,
           model_used: null,
           generated_at: null,
@@ -276,6 +434,7 @@ export class DraftsService {
     blogTitle: string,
     blogBody: string,
     blogTags: string[],
+    caption: string | null,
     modelUsed: string,
   ): Promise<DraftRow> {
     const { data, error } = await this.supabase.admin
@@ -286,6 +445,7 @@ export class DraftsService {
         blog_title: blogTitle,
         blog_body: blogBody,
         blog_tags: blogTags,
+        caption,
         model_used: modelUsed,
         generated_at: new Date().toISOString(),
         error_reason: null,
