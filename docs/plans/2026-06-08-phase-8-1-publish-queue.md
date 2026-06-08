@@ -145,3 +145,85 @@ pending ──(worker 선점)──> processing ──(콜백 published)──> 
 - **stub→실채널 전환 격차**: stub 은 항상 성공 echo → 실제 채널의 실패 모드(인스타 rate limit, 네이버 메일 지연)는 Phase 9/10 에서 드러남. 상태머신·재시도는 미리 그 형태로 설계해 충격 흡수.
 - **마이그레이션 순서**: 코드(select `publish_jobs`)가 마이그레이션보다 먼저면 에러. 로컬은 마이그레이션 먼저 적용.
 - **Phase 8-2 인터페이스**: 8-1 의 `GET /drafts/:id/jobs` 응답 shape 가 8-2 상태 뱃지의 계약. job 필드(status/attempts/last_error) 를 8-2 가 쓸 수 있게 노출.
+
+---
+
+## 구현 청크 (큰 단위 = 커밋 경계)
+
+> 각 청크는 **독립적으로 검증 가능한 단위**. 코드 본체는 실행 단계에서([[feedback_plan_no_code]]), 검증은 type-check + curl 수동 시나리오([[feedback_no_tests_in_prototype]]). 청크 끝마다 커밋(승인 후, [[feedback_commit_requires_approval]]).
+>
+> 의존 순서: C1(스키마) → C2(큐 서비스/API) → C3(워커+트리거) → C4(콜백) → C5(n8n stub+라운드트립). C2 까지는 워커/n8n 없이 **수동으로 상태 전이를 흉내**내 검증 가능 → 점진적.
+
+### ☐ C1 — DB 스키마 + 모듈 스캐폴드
+**무엇**: 장부 테이블과 빈 모듈 골격. 아직 로직 없음.
+- Create: `supabase/migrations/20260608000001_phase8_publish_jobs.sql` (spec §변경대상 DB 블록 그대로 — 테이블 + 인덱스 2개 + RLS owner-only).
+- Create: `apps/backend/src/publish/publish.module.ts` (`ScheduleModule.forRoot()` 등록, providers 비움), `publish.schema.ts` (zod: `PublishChannel` enum `'naver'|'instagram'`, `PublishStatus`, `PublishJob` row, 트리거 payload, 콜백 payload).
+- Modify: `apps/backend/src/app/app.module.ts` (imports 에 `PublishModule` 한 줄).
+- Modify: `apps/backend/package.json` (`@nestjs/schedule` 추가) → `pnpm install`.
+- Modify: `apps/backend/src/supabase/database.types.ts` (`publish_jobs` Row/Insert/Update).
+
+**검증**:
+- `pnpm --filter backend type-check` 통과.
+- 마이그레이션 적용(가이드 → 수동, [[feedback_infra_cli_guide_only]]) 후 MCP `list_tables`/`execute_sql` 로 `publish_jobs` 컬럼·인덱스·RLS 존재 확인.
+- 앱 부팅(`pnpm dev:backend`) 시 모듈 로드 에러 없음.
+
+**커밋**: `feat(publish): publish_jobs 스키마 + 모듈 스캐폴드 (Phase 8-1 C1)`
+
+### ☐ C2 — 큐 서비스 + REST API (워커/n8n 없이)
+**무엇**: 장부 CRUD + 상태 전이 로직 + API 3개. n8n 없이 **수동으로** 라이프사이클 검증.
+- Create: `apps/backend/src/publish/publish.service.ts`
+  - `createJobs(draftId, userId, channels[], scheduledAt?)` — 소유 draft 검증 후 채널별 `pending` insert.
+  - `listJobs(draftId, userId)` — 소유 검증 + 상태 조회.
+  - `claimDueJobs()` — `pending AND scheduled_at<=now()` 조건부 UPDATE → `processing`(`attempts++`, `triggered_at`). 선점된 row 반환. (C3 워커가 호출, C2 에선 함수만.)
+  - `markResult(jobId, status, externalRef?, error?)` — 멱등(종결 job no-op) + 자동 재시도 분기(`failed && attempts<max` → backoff 재큐). (C4 콜백/C3 트리거 실패가 호출.)
+  - `retry(jobId, userId)` — `failed` 만, `attempts=0`+`pending`+`scheduled_at=now()`.
+- Create: `apps/backend/src/publish/publish.controller.ts` — `POST /drafts/:id/publish` / `GET /drafts/:id/jobs` / `POST /publish-jobs/:id/retry`. `SupabaseAuthGuard` 적용(기존 drafts 패턴).
+
+**검증** (curl, 로컬):
+- `POST /drafts/:id/publish {channels:['naver','instagram']}` → `GET /drafts/:id/jobs` 에 `pending` 2 row.
+- `execute_sql` 로 한 job 을 수동 `processing`→`published` 흉내 → `listJobs` 반영.
+- `retry` 호출 시 `failed`→`pending` 전이(없으면 4xx). 다른 사용자 draft 접근 403.
+
+**커밋**: `feat(publish): 큐 서비스 + 발행/조회/재시도 API (Phase 8-1 C2)`
+
+### ☐ C3 — 워커 + n8n 트리거 (어댑터)
+**무엇**: 장부 보고 n8n 쏘는 일꾼 + 어댑터 추상화 + HMAC 서명.
+- Create: `apps/backend/src/publish/triggers/publish-trigger.ts` — `interface PublishTrigger { trigger(job): Promise<void> }` + DI 토큰.
+- Create: `apps/backend/src/publish/triggers/n8n-publish.trigger.ts` — `crypto` HMAC-SHA256 서명(`x-cp-signature`) + `fetch(N8N_WEBHOOK_URL, …)`.
+- Create: `apps/backend/src/publish/publish.worker.ts` — `@Interval(10_000)` → `claimDueJobs()` → 각 job `PublishTrigger.trigger`. 트리거 throw 시 catch → `markResult(jobId,'failed',…)`.
+- Modify: `publish.module.ts` providers 에 worker + `{ provide: PublishTrigger, useClass: N8nPublishTrigger }`.
+- Modify: `apps/backend/.env.example` (`N8N_WEBHOOK_URL=`) + 로컬 `.env`.
+
+**검증**:
+- `type-check` 통과.
+- N8N_WEBHOOK_URL 을 로컬 더미(예: `webhook.site`)로 설정 → `POST publish` → ≤10초 후 더미가 **HMAC 헤더 포함 요청 수신** 확인 + job `processing` 전이.
+- 더미가 5xx/무응답 → 워커 catch → `failed` + `attempts` 증가 확인(자동 재시도 backoff).
+
+**커밋**: `feat(publish): 크론 워커 + n8n HMAC 트리거 어댑터 (Phase 8-1 C3)`
+
+### ☐ C4 — 콜백 webhook + HMAC 검증
+**무엇**: n8n 이 "보냈음" 알려주면 장부에 도장. 위조 차단.
+- Create: `apps/backend/src/publish/webhook.controller.ts` — `POST /api/webhook/publish-result`. **인증 가드 없음**(n8n 콜백), 대신 HMAC raw-body 검증.
+- Modify: backend bootstrap(`main.ts`) 또는 모듈 — `webhook` 라우트만 **raw body 보존**(global JSON 파서 전에 원본 확보; `rawBody:true` 옵션 또는 전용 미들웨어). 검증 통과 시 `markResult(payload)`.
+
+**검증**:
+- 올바른 서명 콜백 `{jobId, status:'published'}` → job `published` + `published_at`.
+- **변조 서명/바디** → `401`, job 불변.
+- 종결 job 에 중복 콜백 → no-op(멱등).
+
+**커밋**: `feat(publish): 발행 결과 콜백 webhook + HMAC 검증 (Phase 8-1 C4)`
+
+### ☐ C5 — n8n stub 워크플로우 + 전체 라운드트립 (가이드 → 수동)
+**무엇**: 빈 박스 배송 테스트. 코드 0줄, n8n UI 구성 + SSM + 통합 검증. ([[feedback_infra_cli_guide_only]] — 가이드 제공, dawoon 직접 실행. read-only/curl 은 같이.)
+- 가이드: n8n UI 에 워크플로우 1개 — Webhook(`/webhook/publish`, HMAC 검증 노드) → Set/Code(echo) → HTTP Request(앱 콜백 `published`, 같은 HMAC 서명).
+- 가이드: SSM `/cp/N8N_WEBHOOK_URL` 추가 + ECS task def 주입(클라우드 검증 시).
+
+**검증** (전체 라운드트립, spec §검증 시나리오):
+1. 즉시 발행 → `pending`→(워커)→`processing`→(n8n stub 콜백)→`published`.
+2. 채널당 1 job 독립 전이.
+3. HMAC 변조 401/reject.
+4. 예약 발행(`scheduledAt` 미래) 시각 도달 후 트리거.
+5. 자동 재시도(n8n 다운) → backoff → max 도달 `failed`.
+6. 수동 재시도 → 재진입.
+
+**커밋**: `docs(publish): n8n stub 워크플로우 구성 가이드 + 라운드트립 검증 (Phase 8-1 C5)` (+ 마감 시 design doc §8 Phase 8-1 완료 마킹).
