@@ -6,12 +6,13 @@ import { PublishService } from './publish.service';
 import { PublishWorker } from './publish.worker';
 import { N8nPublishTrigger } from './triggers/n8n-publish.trigger';
 import { PUBLISH_TRIGGER } from './triggers/publish-trigger';
+import { WebhookController } from './webhook.controller';
 
-// Phase 8-1 발행 큐. C3 = 워커 + n8n HMAC 트리거 어댑터. C4 콜백.
-// SupabaseModule 은 @Global 이라 재import 불필요.
+// Phase 8-1 발행 큐. C4 = n8n 콜백 webhook + HMAC 검증. (라운드트립 코드 완성)
+// SupabaseModule 은 @Global 이라 재import 불필요. 가드(WebhookHmacGuard)는 ConfigService(@Global)로 자동 resolve.
 @Module({
   imports: [ScheduleModule.forRoot()],
-  controllers: [PublishController],
+  controllers: [PublishController, WebhookController],
   providers: [
     PublishService,
     PublishWorker,
