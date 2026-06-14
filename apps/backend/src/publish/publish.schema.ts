@@ -11,7 +11,8 @@ export type PublishStatus = z.infer<typeof publishStatusSchema>;
 // POST /drafts/:id/publish 요청 바디. channels 채널별 1 job. scheduledAt 미래면 예약 발행.
 export const createPublishSchema = z.object({
   channels: z.array(publishChannelSchema).min(1).max(2),
-  scheduledAt: z.string().datetime().optional(),
+  // offset:true — 한국 로컬(+09:00) 등 타임존 오프셋 허용. 기본값은 Z(UTC)만 받아 예약 발행이 깨짐.
+  scheduledAt: z.string().datetime({ offset: true }).optional(),
 });
 export type CreatePublishPayload = z.infer<typeof createPublishSchema>;
 

@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   Logger,
@@ -30,7 +31,9 @@ export class PublishService {
     const { channels, scheduledAt } = createPublishSchema.parse(input);
     await this.loadOwnedDraft(draftId, userId);
 
-    const rows = channels.map((channel: PublishChannel) => ({
+    // 채널 배열 내 중복 제거(예: ['naver','naver']). 활성 job 중복은 DB 유니크 인덱스가 최종 방어.
+    const uniqueChannels = [...new Set(channels)];
+    const rows = uniqueChannels.map((channel: PublishChannel) => ({
       draft_id: draftId,
       user_id: userId,
       channel,
@@ -39,7 +42,13 @@ export class PublishService {
     }));
 
     const { data, error } = await this.supabase.admin.from('publish_jobs').insert(rows).select();
-    if (error) throw new BadRequestException(`Failed to create publish jobs: ${error.message}`);
+    if (error) {
+      // 23505 = unique_violation: 이미 발행 대기/진행 중인 채널 → 중복 발행 차단.
+      if (error.code === '23505') {
+        throw new ConflictException('이미 발행 대기 또는 진행 중인 채널이 있습니다');
+      }
+      throw new BadRequestException(`Failed to create publish jobs: ${error.message}`);
+    }
     return data ?? [];
   }
 
@@ -151,7 +160,13 @@ export class PublishService {
       .eq('id', jobId)
       .select()
       .single();
-    if (error) throw new BadRequestException(`Failed to retry publish job: ${error.message}`);
+    if (error) {
+      // failed job 재활성 시 같은 채널의 다른 활성 job 과 충돌(유니크 인덱스) → 23505.
+      if (error.code === '23505') {
+        throw new ConflictException('이미 발행 대기 또는 진행 중인 같은 채널 작업이 있습니다');
+      }
+      throw new BadRequestException(`Failed to retry publish job: ${error.message}`);
+    }
     return data;
   }
 
