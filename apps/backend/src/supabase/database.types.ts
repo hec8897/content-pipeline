@@ -71,6 +71,65 @@ export type Database = {
           },
         ];
       };
+      publish_jobs: {
+        Row: {
+          attempts: number;
+          channel: string;
+          created_at: string;
+          draft_id: string;
+          external_ref: string | null;
+          id: string;
+          last_error: string | null;
+          max_attempts: number;
+          published_at: string | null;
+          scheduled_at: string;
+          status: string;
+          triggered_at: string | null;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          attempts?: number;
+          channel: string;
+          created_at?: string;
+          draft_id: string;
+          external_ref?: string | null;
+          id?: string;
+          last_error?: string | null;
+          max_attempts?: number;
+          published_at?: string | null;
+          scheduled_at?: string;
+          status?: string;
+          triggered_at?: string | null;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          attempts?: number;
+          channel?: string;
+          created_at?: string;
+          draft_id?: string;
+          external_ref?: string | null;
+          id?: string;
+          last_error?: string | null;
+          max_attempts?: number;
+          published_at?: string | null;
+          scheduled_at?: string;
+          status?: string;
+          triggered_at?: string | null;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'publish_jobs_draft_id_fkey';
+            columns: ['draft_id'];
+            isOneToOne: false;
+            referencedRelation: 'drafts';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       interview_messages: {
         Row: {
           content: string;
