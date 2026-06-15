@@ -238,9 +238,12 @@ Phase 1b — 인프라 (~3~4일)  ← 지연됨
   - Cloudflare DNS + Zero Trust Access (n8n UI 보호)
   - GitHub Actions OIDC → ECR/ECS 배포 파이프라인
 
-Phase 5 — 발행 인프라 (~2일)
-  - 발행 큐 DB 스키마 (publish_queue, SoT 원칙) + 앱 ↔ n8n webhook + HMAC
-  - 스케줄러 (node-cron, 예약 발행)
+Phase 5 — 발행 인프라 (~2일)  ← ✅ Phase 8-1 로 완료 (2026-06-14)
+  - 발행 큐 DB 스키마 (publish_jobs, SoT 원칙) + 앱 ↔ n8n webhook + HMAC ✅
+  - 스케줄러 (워커 @Interval 폴링 + scheduled_at 예약 발행) ✅
+  - 로컬·클라우드 라운드트립 검증 완료(즉시발행 pending→processing→published).
+    plan: docs/plans/2026-06-08-phase-8-1-publish-queue.md
+  - 남은 것: 프론트 발행 UI = Phase 8-2 (PublishForm API 배선 + 상태 뱃지/재시도)
 
 Phase 6 — 네이버 자동 (~1~2일)
   - n8n 워크플로우: 메일 포스팅 트릭
