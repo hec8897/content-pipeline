@@ -1,3 +1,5 @@
+import type { Channel } from '@/types';
+
 export type SessionStatus = 'active' | 'completed' | 'skipped';
 export type EndReason = 'user_stop' | 'ai_judged_enough' | 'max_reached';
 export type MessageRole = 'assistant' | 'user';
@@ -128,4 +130,25 @@ export interface PatchDraftPayload {
   blog_title?: string;
   blog_body?: string;
   blog_tags?: string[];
+}
+
+// ─── Publish (Phase 8) ────────────────────────────────────────────────────
+// 큐 상태머신 (백엔드 publish_jobs.status 와 일치). pending → processing → published / failed.
+export type PublishStatus = 'pending' | 'processing' | 'published' | 'failed';
+
+// publish_jobs row. channel 은 API 경계(publish.ts)에서 프론트 Channel('insta')로 매핑된 값.
+export interface PublishJob {
+  id: string;
+  draft_id: string;
+  channel: Channel;
+  status: PublishStatus;
+  scheduled_at: string;
+  attempts: number;
+  max_attempts: number;
+  last_error: string | null;
+  external_ref: string | null;
+  triggered_at: string | null;
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
 }
