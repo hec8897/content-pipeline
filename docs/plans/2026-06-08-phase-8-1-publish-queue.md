@@ -154,7 +154,7 @@ pending ──(worker 선점)──> processing ──(콜백 published)──> 
 >
 > 의존 순서: C1(스키마) → C2(큐 서비스/API) → C3(워커+트리거) → C4(콜백) → C5(n8n stub+라운드트립). C2 까지는 워커/n8n 없이 **수동으로 상태 전이를 흉내**내 검증 가능 → 점진적.
 
-### ☐ C1 — DB 스키마 + 모듈 스캐폴드
+### ☑ C1 — DB 스키마 + 모듈 스캐폴드
 **무엇**: 장부 테이블과 빈 모듈 골격. 아직 로직 없음.
 - Create: `supabase/migrations/20260608000001_phase8_publish_jobs.sql` (spec §변경대상 DB 블록 그대로 — 테이블 + 인덱스 2개 + RLS owner-only).
 - Create: `apps/backend/src/publish/publish.module.ts` (`ScheduleModule.forRoot()` 등록, providers 비움), `publish.schema.ts` (zod: `PublishChannel` enum `'naver'|'instagram'`, `PublishStatus`, `PublishJob` row, 트리거 payload, 콜백 payload).
@@ -169,7 +169,7 @@ pending ──(worker 선점)──> processing ──(콜백 published)──> 
 
 **커밋**: `feat(publish): publish_jobs 스키마 + 모듈 스캐폴드 (Phase 8-1 C1)`
 
-### ☐ C2 — 큐 서비스 + REST API (워커/n8n 없이)
+### ☑ C2 — 큐 서비스 + REST API (워커/n8n 없이)
 **무엇**: 장부 CRUD + 상태 전이 로직 + API 3개. n8n 없이 **수동으로** 라이프사이클 검증.
 - Create: `apps/backend/src/publish/publish.service.ts`
   - `createJobs(draftId, userId, channels[], scheduledAt?)` — 소유 draft 검증 후 채널별 `pending` insert.
@@ -186,7 +186,7 @@ pending ──(worker 선점)──> processing ──(콜백 published)──> 
 
 **커밋**: `feat(publish): 큐 서비스 + 발행/조회/재시도 API (Phase 8-1 C2)`
 
-### ☐ C3 — 워커 + n8n 트리거 (어댑터)
+### ☑ C3 — 워커 + n8n 트리거 (어댑터)
 **무엇**: 장부 보고 n8n 쏘는 일꾼 + 어댑터 추상화 + HMAC 서명.
 - Create: `apps/backend/src/publish/triggers/publish-trigger.ts` — `interface PublishTrigger { trigger(job): Promise<void> }` + DI 토큰.
 - Create: `apps/backend/src/publish/triggers/n8n-publish.trigger.ts` — `crypto` HMAC-SHA256 서명(`x-cp-signature`) + `fetch(N8N_WEBHOOK_URL, …)`.
@@ -201,7 +201,7 @@ pending ──(worker 선점)──> processing ──(콜백 published)──> 
 
 **커밋**: `feat(publish): 크론 워커 + n8n HMAC 트리거 어댑터 (Phase 8-1 C3)`
 
-### ☐ C4 — 콜백 webhook + HMAC 검증
+### ☑ C4 — 콜백 webhook + HMAC 검증
 **무엇**: n8n 이 "보냈음" 알려주면 장부에 도장. 위조 차단.
 - Create: `apps/backend/src/publish/webhook.controller.ts` — `POST /api/webhook/publish-result`. **인증 가드 없음**(n8n 콜백), 대신 HMAC raw-body 검증.
 - Modify: backend bootstrap(`main.ts`) 또는 모듈 — `webhook` 라우트만 **raw body 보존**(global JSON 파서 전에 원본 확보; `rawBody:true` 옵션 또는 전용 미들웨어). 검증 통과 시 `markResult(payload)`.
@@ -213,7 +213,7 @@ pending ──(worker 선점)──> processing ──(콜백 published)──> 
 
 **커밋**: `feat(publish): 발행 결과 콜백 webhook + HMAC 검증 (Phase 8-1 C4)`
 
-### ☐ C5 — n8n stub 워크플로우 + 전체 라운드트립 (가이드 → 수동)
+### ☑ C5 — n8n stub 워크플로우 + 전체 라운드트립 (가이드 → 수동)
 **무엇**: 빈 박스 배송 테스트. 코드 0줄, n8n UI 구성 + SSM + 통합 검증. ([[feedback_infra_cli_guide_only]] — 가이드 제공, dawoon 직접 실행. read-only/curl 은 같이.)
 - 가이드: n8n UI 에 워크플로우 1개 — Webhook(`/webhook/publish`, HMAC 검증 노드) → Set/Code(echo) → HTTP Request(앱 콜백 `published`, 같은 HMAC 서명).
 - 가이드: SSM `/cp/N8N_WEBHOOK_URL` 추가 + ECS task def 주입(클라우드 검증 시).
@@ -227,3 +227,24 @@ pending ──(worker 선점)──> processing ──(콜백 published)──> 
 6. 수동 재시도 → 재진입.
 
 **커밋**: `docs(publish): n8n stub 워크플로우 구성 가이드 + 라운드트립 검증 (Phase 8-1 C5)` (+ 마감 시 design doc §8 Phase 8-1 완료 마킹).
+
+---
+
+## 마감 상태 (2026-06-14) — ✅ DONE
+
+C1~C5 전부 구현·커밋 완료(`4e7c588`·`0518b12`·`8d8feaf`·`f70a9a6`·`f9efb35`). 코드리뷰 후 추가 패치 `fc00f6f`:
+- **중복 발행 방어**: `createJobs` channels Set dedup + insert 23505 → `ConflictException`, `retry` 동일. 마이그레이션 `20260614000001` `(draft_id, channel)` partial unique index (pending/processing 활성에만 — 종결 후 재발행 허용).
+- **예약 발행 타임존**: `scheduledAt` zod `datetime({ offset: true })` (로컬 `+09:00` 오프셋 허용).
+
+**배포**: PR #22 → develop, PR #23 develop → main 머지 → CI/CD 배포 성공(webhook 라우트 404→401 확인). 마이그레이션 2개는 cp Supabase(`fphlsaulrqfjtjmwbkdw`)에 적용 완료.
+
+**라운드트립 검증 (로컬 Docker n8n + 클라우드 모두 성공):**
+| # | 시나리오 | 결과 |
+|---|---|---|
+| 1 | 즉시 발행 pending→processing→published(`external_ref='n8n-stub'`) | ✅ 로컬·클라우드 |
+| 3 | HMAC 양방향 (불일치 401 / 일치 200) | ✅ (구성 디버깅 중 실증) |
+| 2,4,5,6 | 채널 독립·예약·자동재시도(backoff/failed)·수동재시도 | 로직 구현·C2/C3 더미로 부분검증, end-to-end 미반복(YAGNI) |
+
+**알려진 미세 이슈(미수정):** webhook `publishResultSchema.parse()` 가 ZodError 던지면 400 아닌 500. n8n 은 항상 유효 jobId 보내 무해. 추후 try/catch → BadRequestException 후보.
+
+**다음**: Phase 8-2 (프론트 발행 UI — `PublishForm` 을 실제 API 에 배선 + job 상태 뱃지/재시도 버튼).
