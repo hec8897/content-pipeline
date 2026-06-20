@@ -9,8 +9,14 @@ import {
 
 import type { Database } from '@/supabase/database.types';
 import { SupabaseService } from '@/supabase/supabase.service';
+import { StorageService } from '@/storage/storage.service';
 
-import { createPublishSchema, type PublishChannel, type PublishStatus } from './publish.schema';
+import {
+  createPublishSchema,
+  instagramPayloadSchema,
+  type PublishChannel,
+  type PublishStatus,
+} from './publish.schema';
 
 type PublishJobRow = Database['public']['Tables']['publish_jobs']['Row'];
 type DraftRow = Database['public']['Tables']['drafts']['Row'];
@@ -24,22 +30,53 @@ const CLAIM_BATCH = 20;
 export class PublishService {
   private readonly logger = new Logger(PublishService.name);
 
-  constructor(private readonly supabase: SupabaseService) {}
+  constructor(
+    private readonly supabase: SupabaseService,
+    private readonly storage: StorageService,
+  ) {}
 
   // POST /drafts/:id/publish — 채널별 1 job(pending) 생성. scheduledAt 미래면 예약 발행.
   async createJobs(draftId: string, userId: string, input: unknown): Promise<PublishJobRow[]> {
-    const { channels, scheduledAt } = createPublishSchema.parse(input);
-    await this.loadOwnedDraft(draftId, userId);
+    const { channels, scheduledAt, images } = createPublishSchema.parse(input);
+    const draft = await this.loadOwnedDraft(draftId, userId);
 
     // 채널 배열 내 중복 제거(예: ['naver','naver']). 활성 job 중복은 DB 유니크 인덱스가 최종 방어.
     const uniqueChannels = [...new Set(channels)];
-    const rows = uniqueChannels.map((channel: PublishChannel) => ({
-      draft_id: draftId,
-      user_id: userId,
-      channel,
-      status: 'pending' as const,
-      ...(scheduledAt ? { scheduled_at: scheduledAt } : {}),
-    }));
+
+    // 인스타 채널 포함 시 caption + images 사전 검증. 공개 URL base 접두사 검사.
+    const storageBase = this.storage.getPublicUrl('');
+    const rows = uniqueChannels.map((channel: PublishChannel) => {
+      if (channel === 'instagram') {
+        if (!draft.caption || !draft.caption.trim()) {
+          throw new BadRequestException('인스타 발행에는 캡션이 필요합니다');
+        }
+        if (!images || images.length < 2 || images.length > 10) {
+          throw new BadRequestException('인스타 발행에는 이미지 2~10장이 필요합니다');
+        }
+        for (const url of images) {
+          if (!url.startsWith(storageBase)) {
+            throw new BadRequestException('허용되지 않은 이미지 URL 입니다');
+          }
+        }
+        const payload = instagramPayloadSchema.parse({ caption: draft.caption, images });
+        return {
+          draft_id: draftId,
+          user_id: userId,
+          channel,
+          status: 'pending' as const,
+          payload,
+          ...(scheduledAt ? { scheduled_at: scheduledAt } : {}),
+        };
+      }
+      // naver 등 기타 채널 — payload 미설정(추후).
+      return {
+        draft_id: draftId,
+        user_id: userId,
+        channel,
+        status: 'pending' as const,
+        ...(scheduledAt ? { scheduled_at: scheduledAt } : {}),
+      };
+    });
 
     const { data, error } = await this.supabase.admin.from('publish_jobs').insert(rows).select();
     if (error) {
