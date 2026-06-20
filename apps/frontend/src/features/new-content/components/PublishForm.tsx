@@ -15,6 +15,7 @@ import { useNewContent } from '@/features/new-content/context';
 import { ChannelSelector } from '@/features/new-content/components/ChannelSelector';
 import { PublishJobsPanel } from '@/features/new-content/components/PublishJobsPanel';
 import { usePublishJobs } from '@/features/new-content/hooks/usePublishJobs';
+import { uploadCarouselImages } from '@/features/new-content/lib/uploadCarouselImages';
 
 export function PublishForm() {
   const router = useRouter();
@@ -36,9 +37,15 @@ export function PublishForm() {
   }, [draftMissing, router]);
 
   const draftId = draftQuery.data?.draft?.id ?? null;
+  // draft 에서 카드·캡션 읽기 — insta 발행 가드·업로드에 사용
+  const cardNews = draftQuery.data?.draft?.card_news ?? null;
+  const caption = draftQuery.data?.draft?.caption ?? null;
+
   const { query: jobsQuery, createJobs, retryJob } = usePublishJobs(draftId);
 
   const [enabled, setEnabled] = useState<Record<Channel, boolean>>({ naver: true, insta: true });
+  // 이미지 준비(렌더→업로드) 진행 중 로컬 busy 상태
+  const [imagesBusy, setImagesBusy] = useState(false);
   const toggle = (ch: Channel) => setEnabled((prev) => ({ ...prev, [ch]: !prev[ch] }));
 
   if (!topicId) return null;
@@ -55,21 +62,49 @@ export function PublishForm() {
   const hasJobs = jobs.length > 0;
 
   const selectedChannels = (Object.keys(enabled) as Channel[]).filter((ch) => enabled[ch]);
+  const instaSelected = enabled.insta;
 
-  const submit = () => {
-    createJobs.mutate(selectedChannels, {
-      onError: (err) => {
-        if (err instanceof ApiError && err.status === 409) {
-          // 이미 활성 job 있는 채널 — 기존 현황으로 폴백.
-          toast.warn('이미 발행 대기 중', { msg: err.message });
-          jobsQuery.refetch();
-        } else {
-          toast.error('발행 요청 실패', {
-            msg: err instanceof ApiError ? err.message : '잠시 후 다시 시도해 주세요',
-          });
-        }
+  // insta 발행 가드 — 캡션 또는 카드 수 조건 미충족 시 true
+  const instaInvalid =
+    instaSelected &&
+    (!caption?.trim() || !cardNews || cardNews.length < 2 || cardNews.length > 10);
+
+  const isBusy = imagesBusy || createJobs.isPending;
+
+  const submit = async () => {
+    let images: string[] | undefined;
+
+    if (instaSelected && cardNews) {
+      // 인스타 채널: 카드 렌더 → Storage 업로드 → URL 배열 확보
+      setImagesBusy(true);
+      try {
+        images = await uploadCarouselImages(draftId!, cardNews);
+      } catch (err) {
+        toast.error('이미지 준비 실패', {
+          msg: err instanceof Error ? err.message : '카드 이미지 업로드 중 오류가 발생했어요',
+        });
+        setImagesBusy(false);
+        return;
+      }
+      setImagesBusy(false);
+    }
+
+    createJobs.mutate(
+      { channels: selectedChannels, images },
+      {
+        onError: (err) => {
+          if (err instanceof ApiError && err.status === 409) {
+            // 이미 활성 job 있는 채널 — 기존 현황으로 폴백.
+            toast.warn('이미 발행 대기 중', { msg: err.message });
+            jobsQuery.refetch();
+          } else {
+            toast.error('발행 요청 실패', {
+              msg: err instanceof ApiError ? err.message : '잠시 후 다시 시도해 주세요',
+            });
+          }
+        },
       },
-    });
+    );
   };
 
   return (
@@ -94,21 +129,36 @@ export function PublishForm() {
           <>
             <ChannelSelector enabled={enabled} onToggle={toggle} />
 
+            {/* insta 발행 가드 안내 */}
+            {instaInvalid && (
+              <p className="text-[12px] text-amber-600 px-1">
+                인스타 발행에는 캡션과 카드 2장 이상이 필요해요
+              </p>
+            )}
+
             <div className="flex items-center gap-1.5 text-[12px] text-text-2 px-1">
               <Zap className="w-3.5 h-3.5 text-accent" /> 즉시 발행됩니다
             </div>
 
             <button
               onClick={submit}
-              disabled={selectedChannels.length === 0 || createJobs.isPending}
+              disabled={selectedChannels.length === 0 || isBusy || instaInvalid}
               className="inline-flex items-center justify-center gap-2 bg-text text-white rounded-md px-5 py-3 text-[13px] font-semibold hover:bg-black disabled:opacity-40"
             >
-              {createJobs.isPending ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              {imagesBusy ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" /> 이미지 준비 중
+                </>
               ) : (
-                <Send className="w-3.5 h-3.5" />
-              )}{' '}
-              발행하기
+                <>
+                  {createJobs.isPending ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Send className="w-3.5 h-3.5" />
+                  )}{' '}
+                  발행하기
+                </>
+              )}
             </button>
 
             <p className="text-[11px] text-text-3 text-center">

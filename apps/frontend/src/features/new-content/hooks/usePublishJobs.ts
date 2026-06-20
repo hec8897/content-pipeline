@@ -30,7 +30,8 @@ export function usePublishJobs(draftId: string | null) {
   };
 
   const createJobs = useMutation({
-    mutationFn: (channels: Channel[]) => publishApi.create(draftId!, channels),
+    mutationFn: (vars: { channels: Channel[]; images?: string[] }) =>
+      publishApi.create(draftId!, vars.channels, vars.images),
     onSuccess: invalidate,
   });
 
