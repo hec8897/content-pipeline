@@ -1,0 +1,147 @@
+{
+  "name": "cp-insta-publish",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "publish",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "webhook-in",
+      "name": "Webhook (발행 트리거 수신)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "cp-insta-publish"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ===== 채울 값: 토큰만 붙여넣기 (IG_USER_ID 는 채워둠) =====\nconst ACCESS_TOKEN = 'PASTE_INSTAGRAM_ACCESS_TOKEN';\nconst IG_USER_ID = '27545798328443881';\n// =======================================================\nconst G = 'https://graph.instagram.com';\nconst ME = G + '/' + IG_USER_ID;\nconst b = $input.first().json.body;\nconst jobId = b.jobId;\nconst caption = (b.payload && b.payload.caption) || '';\nconst images = (b.payload && b.payload.images) || [];\nlet step = 'start';\n\n// 모든 호출이 IG 실제 에러 본문을 throw 하도록 (returnFullResponse + ignoreHttpStatusErrors)\nconst call = async (method, url, params) => {\n  const res = await this.helpers.httpRequest({\n    method, url,\n    qs: Object.assign({}, params, { access_token: ACCESS_TOKEN }),\n    json: true, returnFullResponse: true, ignoreHttpStatusErrors: true,\n  });\n  if (res.statusCode >= 300) throw new Error('HTTP ' + res.statusCode + ' ' + JSON.stringify(res.body));\n  return res.body;\n};\nconst sleep = (ms) => new Promise((r) => setTimeout(r, ms));\n\ntry {\n  // 1) 이미지별 캐러셀 아이템 컨테이너\n  const ids = [];\n  for (let i = 0; i < images.length; i++) {\n    step = 'item' + i;\n    const r = await call('POST', ME + '/media', { image_url: images[i], is_carousel_item: 'true' });\n    ids.push(r.id);\n  }\n  // 2) 캐러셀 컨테이너\n  step = 'carousel';\n  const c = await call('POST', ME + '/media', { media_type: 'CAROUSEL', children: ids.join(','), caption: caption });\n  // 3) 컨테이너 FINISHED 까지 폴링 (안 하면 media_publish 가 400)\n  step = 'wait';\n  for (let t = 0; t < 15; t++) {\n    const s = await call('GET', G + '/' + c.id, { fields: 'status_code' });\n    if (s.status_code === 'FINISHED') break;\n    if (s.status_code === 'ERROR' || s.status_code === 'EXPIRED') throw new Error('container ' + s.status_code);\n    await sleep(2500);\n  }\n  // 4) 발행\n  step = 'publish';\n  const p = await call('POST', ME + '/media_publish', { creation_id: c.id });\n  return [{ json: { jobId, status: 'published', externalRef: String(p.id) } }];\n} catch (e) {\n  return [{ json: { jobId, status: 'failed', error: ('[' + step + '] ' + ((e && e.message) || String(e))).slice(0, 800) } }];\n}"
+      },
+      "id": "ig-publish",
+      "name": "인스타 캐러셀 발행",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// 백엔드 콜백 바디를 '문자열'로 고정 → HMAC 서명한 바이트 = 보낼 바이트 일치 보장\nconst j = $input.first().json;\nconst out = { jobId: j.jobId, status: j.status };\nif (j.externalRef) out.externalRef = j.externalRef;\nif (j.error) out.error = j.error;\nreturn [{ json: { bodyString: JSON.stringify(out) } }];"
+      },
+      "id": "build-body",
+      "name": "콜백 바디 만들기",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "action": "hmac",
+        "type": "SHA256",
+        "value": "={{ $json.bodyString }}",
+        "dataPropertyName": "signature",
+        "secret": "PASTE_HMAC_WEBHOOK_SECRET",
+        "encoding": "hex"
+      },
+      "id": "hmac-sign",
+      "name": "HMAC 서명",
+      "type": "n8n-nodes-base.crypto",
+      "typeVersion": 1,
+      "position": [
+        960,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:3001/api/webhook/publish-result",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-cp-signature",
+              "value": "=sha256={{ $json.signature }}"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.bodyString }}",
+        "options": {}
+      },
+      "id": "callback",
+      "name": "백엔드 콜백",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook (발행 트리거 수신)": {
+      "main": [
+        [
+          {
+            "node": "인스타 캐러셀 발행",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "인스타 캐러셀 발행": {
+      "main": [
+        [
+          {
+            "node": "콜백 바디 만들기",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "콜백 바디 만들기": {
+      "main": [
+        [
+          {
+            "node": "HMAC 서명",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HMAC 서명": {
+      "main": [
+        [
+          {
+            "node": "백엔드 콜백",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
