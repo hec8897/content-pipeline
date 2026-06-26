@@ -81,6 +81,7 @@ export type Database = {
           id: string;
           last_error: string | null;
           max_attempts: number;
+          payload: Json | null;
           published_at: string | null;
           scheduled_at: string;
           status: string;
@@ -97,6 +98,7 @@ export type Database = {
           id?: string;
           last_error?: string | null;
           max_attempts?: number;
+          payload?: Json | null;
           published_at?: string | null;
           scheduled_at?: string;
           status?: string;
@@ -113,6 +115,7 @@ export type Database = {
           id?: string;
           last_error?: string | null;
           max_attempts?: number;
+          payload?: Json | null;
           published_at?: string | null;
           scheduled_at?: string;
           status?: string;

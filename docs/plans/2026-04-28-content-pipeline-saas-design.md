@@ -428,8 +428,8 @@ n8n에 들어오는 트래픽은 두 종류:
 | 1b    | [Phase 1b — 인프라 (Vercel + ECS + n8n + Cognito)](./2026-05-17-content-pipeline-phase-1b.md) | 진행 중 (브랜치 `claude/phase-1b-infra`, Task 1~9 마감) |
 | 7.5   | [Phase 7.5 — UI 시스템 + dogfooding 필수 기능 보강](./2026-05-21-content-pipeline-dogfooding-essentials.md) | plan 작성 완료, 구현 대기 |
 | 8     | _Phase 8 — 발행 인프라 (큐/스케줄러/n8n webhook)_                            | —                                 |
-| 9     | _Phase 9 — 네이버 자동_                                                      | —                                 |
-| 10    | _Phase 10 — 인스타 자동_                                                     | —                                 |
+| 9     | [Phase 9 — 인스타 자동 발행](./2026-06-18-phase-9-insta-publish-design.md)   | 진행 중 (브랜치 `feat/phase-9-insta-publish`, spec 작성) |
+| 10    | _Phase 10 — 네이버 자동_                                                     | — (인스타 뒤로 미룸)              |
 | 11    | _Phase 11 — 통합 + dogfooding_                                               | —                                 |
 
 > Out-of-scope backlog: [docs/backlog.md](../backlog.md) — Phase 6 진행 중 미룬 항목 (Storage 영속화 / 사진 위치 조절 / 탭 라우팅 / 캐러셀 미리보기 / 캡션 자동 생성 등) 모음.
@@ -439,6 +439,8 @@ n8n에 들어오는 트래픽은 두 종류:
 > **2026-05-14 분배 재정렬**: 새 Phase 5 = 대시보드/라이브러리 실데이터(딱 리스트 표기까지), 기존 Phase 5(카드뉴스 편집) → Phase 6 으로 밀고 발행 단계들(6~9) → 7~10. 인프라(1b) 위치는 그대로 — 새 Phase 6 과 새 Phase 7 사이.
 >
 > **2026-05-16 분배 재정렬**: Phase 6 마감. LLM provider 가 Gemini → OpenAI 로 일괄 교체될 가능성이 커서 발행 단계(원 Phase 7~10) 직전에 별도 phase 신설 — 새 Phase 7 = LLM 마이그레이션, 이전 발행 단계(7~10)는 +1 씩 뒤로 (8~11). 인프라(1b) 위치는 그대로 — 새 Phase 7 과 새 Phase 8 사이.
+>
+> **2026-06-18 순서 swap**: Phase 9 ↔ 10 교체 — 인스타 자동 발행을 네이버보다 **먼저**. 인스타 카드뉴스가 제품 핵심 산출물이고 콘텐츠/큐 준비가 끝나 실연동 검증 가치가 큼. 네이버(메일 트릭)는 Phase 10 으로 미룸. spec: [2026-06-18-phase-9-insta-publish-design.md](./2026-06-18-phase-9-insta-publish-design.md).
 
 > 직전 Phase 완료 후 다음 plan을 순차 작성. Phase 1a가 굳혀야 Phase 2 위에 얹을 토대가 명확해짐.
 >

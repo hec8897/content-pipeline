@@ -21,10 +21,15 @@ function normalizeJob(raw: PublishJob & { channel: string }): PublishJob {
 
 export const publishApi = {
   // POST /drafts/:id/publish — 채널별 1 job(pending) 생성. 즉시발행이라 scheduledAt 미전송.
-  async create(draftId: string, channels: Channel[]): Promise<PublishJob[]> {
+  // insta 채널 시 images(Storage URL 배열)를 함께 전송 → 백엔드가 job.payload 에 스냅샷.
+  async create(draftId: string, channels: Channel[], images?: string[]): Promise<PublishJob[]> {
+    const body: { channels: string[]; images?: string[] } = {
+      channels: channels.map(toApiChannel),
+    };
+    if (images && images.length > 0) body.images = images;
     const res = await api.post<(PublishJob & { channel: string })[]>(
       `/drafts/${draftId}/publish`,
-      { channels: channels.map(toApiChannel) },
+      body,
     );
     return res.data.map(normalizeJob);
   },

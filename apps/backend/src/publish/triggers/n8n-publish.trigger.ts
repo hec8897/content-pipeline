@@ -23,12 +23,13 @@ export class N8nPublishTrigger implements PublishTrigger {
       throw new Error('N8N_WEBHOOK_URL / HMAC_WEBHOOK_SECRET not configured');
     }
 
-    // channel 은 DB 상 string → zod 가 'naver'|'instagram' 으로 narrowing. payload 는 8-1 stub 이라 빈 객체.
+    // channel 은 DB 상 string → zod 가 'naver'|'instagram' 으로 narrowing.
+    // job.payload 는 인스타면 {caption, images}, naver 등은 null → 빈 객체 fallback.
     const payload = triggerPayloadSchema.parse({
       jobId: job.id,
       draftId: job.draft_id,
       channel: job.channel,
-      payload: {},
+      payload: (job.payload ?? {}) as Record<string, unknown>,
     });
 
     const body = JSON.stringify(payload);
