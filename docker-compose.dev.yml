@@ -1,0 +1,20 @@
+# 로컬 개발 전용 — 발행(Phase 8) 라운드트립 검증용 n8n.
+# 프로덕션 n8n 은 ECS/Cloudflare 에 따로 있음(Phase 1b). 이 파일은 로컬 검증만.
+# 사용: pnpm n8n:up / pnpm n8n:down  (pnpm dev:backend 시 predev 훅으로 자동 기동)
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: cp-n8n
+    restart: unless-stopped
+    ports:
+      # backend(:3001) 가 N8N_WEBHOOK_URL=http://localhost:5678/webhook/publish 로 트리거.
+      - '5678:5678'
+    environment:
+      # 로컬 http 접근에서 secure 쿠키 요구 해제 (로컬 전용, 프로덕션 무관).
+      N8N_SECURE_COOKIE: 'false'
+    volumes:
+      # 워크플로우/자격증명 영속 — 컨테이너 재기동해도 stub 워크플로우 보존.
+      - cp-n8n-data:/home/node/.n8n
+
+volumes:
+  cp-n8n-data:

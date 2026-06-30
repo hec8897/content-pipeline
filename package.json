@@ -5,7 +5,10 @@
   "scripts": {
     "dev": "turbo dev",
     "dev:frontend": "turbo dev --filter=frontend",
+    "predev:backend": "pnpm n8n:up",
     "dev:backend": "turbo dev --filter=backend",
+    "n8n:up": "bash scripts/n8n-up.sh",
+    "n8n:down": "docker compose -f docker-compose.dev.yml down",
     "build": "turbo build",
     "build:frontend": "turbo build --filter=frontend",
     "build:backend": "turbo build --filter=backend",

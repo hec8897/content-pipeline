@@ -9,4 +9,5 @@ export const qk = {
   draft: (topicId: string) => ['draft', topicId] as const,
   drafts: () => ['drafts'] as const,
   draftInterview: (draftId: string) => ['drafts', draftId, 'interview'] as const,
+  publishJobs: (draftId: string) => ['drafts', draftId, 'publish-jobs'] as const,
 };
